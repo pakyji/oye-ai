@@ -23,8 +23,8 @@ import com.oyeai.AppSettings
 import com.oyeai.MainActivity
 import com.oyeai.R
 import com.oyeai.ai.Reply
-import com.oyeai.social.SocialActions
-import com.oyeai.social.SocialCommands
+import com.oyeai.control.PhoneCommandParser
+import com.oyeai.control.PhoneCommandRunner
 import com.oyeai.ui.ChatViewModel
 import com.oyeai.voice.WakeWord.Match
 import kotlinx.coroutines.CoroutineScope
@@ -195,9 +195,9 @@ class ListenService : Service() {
         busy = true
         recognizer?.cancel()
         scope.launch {
-            val social = SocialCommands.parse(text)
-            if (social != null) {
-                speakThenListen(SocialActions.run(this@ListenService, social), null, followUp = false)
+            val phone = PhoneCommandParser.parse(text)
+            if (phone != null) {
+                speakThenListen(PhoneCommandRunner.run(this@ListenService, phone), null, followUp = false)
             } else {
                 val reply: Reply = assistant.handle(text)
                 speakThenListen(reply.text, reply.lang, followUp = false)

@@ -7,13 +7,18 @@ import android.graphics.Path
 import android.os.Build
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
+import java.util.Locale
+
+/** What a label search found. Only the label the user asked for is ever matched. */
+enum class LabelResult { Clicked, Found, NotClickable, NotFound, Unsupported, NoWindow }
 
 /**
- * Optional accessibility service that scrolls Instagram and Facebook when the user asks.
+ * Optional accessibility service for Instagram and Facebook, used when the user asks.
  *
- * It only scrolls. It reads the package name of the active window and whether a view can scroll.
- * It never reads, stores or sends text, and it never taps, likes, follows, comments or types.
- * The user turns it on in Android settings and can turn it off at any time.
+ * It scrolls, goes back or home, and can tap or find one label the user names. Screen text is
+ * matched against that label only: nothing is read out, stored or sent, and no text is typed.
+ * Likes, follows, comments and sending are never tapped. The user turns it on in Android settings
+ * and can turn it off at any time.
  */
 class OyeAccessibilityService : AccessibilityService() {
 
@@ -86,6 +91,67 @@ class OyeAccessibilityService : AccessibilityService() {
                 return found
             }
             child.recycleCompat()
+        }
+        return null
+    }
+
+    /** Performs a global action such as back or home. Returns what Android reported. */
+    fun performGlobal(action: Int): Boolean = performGlobalAction(action)
+
+    /**
+     * Finds the first node whose text or description contains [label]. When [click] is true, it taps
+     * that node or its nearest clickable parent. Only [label] is matched; the screen text is not returned.
+     */
+    fun findLabel(label: String, click: Boolean): LabelResult {
+        val root = rootInActiveWindow ?: return LabelResult.NoWindow
+        val supported = root.packageName?.toString() in SUPPORTED_PACKAGES
+        if (!supported) {
+            root.recycleCompat()
+            return LabelResult.Unsupported
+        }
+        val wanted = label.lowercase(Locale.ROOT)
+        val match = findNode(root, wanted, 0)
+        root.recycleCompat()
+        if (match == null) return LabelResult.NotFound
+        if (!click) {
+            match.recycleCompat()
+            return LabelResult.Found
+        }
+        val target = if (match.isClickable) match else clickableAncestor(match)
+        val performed = target?.performAction(AccessibilityNodeInfo.ACTION_CLICK) == true
+        if (target !== match) target?.recycleCompat()
+        match.recycleCompat()
+        return if (performed) LabelResult.Clicked else LabelResult.NotClickable
+    }
+
+    /** Depth-first search for a node whose text or description contains [wanted]. The caller recycles the result. */
+    private fun findNode(node: AccessibilityNodeInfo, wanted: String, depth: Int): AccessibilityNodeInfo? {
+        if (depth > MAX_DEPTH) return null
+        val text = node.text?.toString()?.lowercase(Locale.ROOT).orEmpty()
+        val desc = node.contentDescription?.toString()?.lowercase(Locale.ROOT).orEmpty()
+        if (wanted.isNotEmpty() && (text.contains(wanted) || desc.contains(wanted))) return node
+        for (i in 0 until node.childCount) {
+            val child = node.getChild(i) ?: continue
+            val found = findNode(child, wanted, depth + 1)
+            if (found != null) {
+                if (found !== child) child.recycleCompat()
+                return found
+            }
+            child.recycleCompat()
+        }
+        return null
+    }
+
+    /** The nearest clickable ancestor within a few levels. The caller recycles the result. */
+    private fun clickableAncestor(node: AccessibilityNodeInfo): AccessibilityNodeInfo? {
+        var current: AccessibilityNodeInfo? = node.parent
+        var levels = 0
+        while (current != null && levels < 6) {
+            if (current.isClickable) return current
+            val next = current.parent
+            current.recycleCompat()
+            current = next
+            levels++
         }
         return null
     }

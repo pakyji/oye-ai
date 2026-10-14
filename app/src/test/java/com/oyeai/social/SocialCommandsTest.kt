@@ -82,4 +82,25 @@ class SocialCommandsTest {
         assertNull(parse("start a new project for my shop"))
         assertNull(parse(""))
     }
+
+    @Test
+    fun hindiAndUrduCommands() {
+        assertEquals(SocialCommand.Open(SocialApp.INSTAGRAM, reels = false), parse("इंस्टाग्राम खोलो"))
+        assertEquals(SocialCommand.Start, parse("स्क्रॉल शुरू करो"))
+        assertEquals(SocialCommand.Stop, parse("स्क्रॉल बंद करो"))
+        assertEquals(SocialCommand.Pause, parse("स्क्रॉल रुको"))
+        assertEquals(SocialCommand.Slower, parse("स्क्रॉल धीरे करो"))
+        assertEquals(SocialCommand.StopAfter(10), parse("10 मिनट बाद स्क्रॉलिंग रोक दो"))
+        assertEquals(SocialCommand.Next, parse("अगला"))
+        assertEquals(SocialCommand.Previous, parse("पिछला"))
+        assertEquals(SocialCommand.Open(SocialApp.INSTAGRAM, reels = false), parse("انسٹاگرام کھولو"))
+        assertEquals(SocialCommand.Start, parse("اسکرول شروع کرو"))
+        assertEquals(SocialCommand.Stop, parse("اسکرول بند کرو"))
+    }
+
+    @Test
+    fun wordsFromOtherCommandsAreNotSocial() {
+        assertNull(parse("pichla task continue karo"))
+        assertNull(parse("musica avanti"))
+    }
 }
