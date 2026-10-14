@@ -41,6 +41,16 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean("start_on_boot", false)
         set(value) = prefs.edit().putBoolean("start_on_boot", value).apply()
 
+    /** Time between automatic scrolls, in milliseconds. */
+    var scrollIntervalMs: Long
+        get() = prefs.getLong("scroll_interval_ms", 6_000L)
+        set(value) = prefs.edit().putLong("scroll_interval_ms", value).apply()
+
+    /** Longest auto-scroll session, in minutes. */
+    var maxSessionMinutes: Int
+        get() = prefs.getInt("max_session_minutes", 15)
+        set(value) = prefs.edit().putInt("max_session_minutes", value).apply()
+
     /** Background "Oye" listening, started and stopped from Settings. */
     var listenForOye: Boolean
         get() = prefs.getBoolean("listen_for_oye", false)

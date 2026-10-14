@@ -10,6 +10,9 @@ import com.oyeai.actions.Outcome
 import com.oyeai.ai.Action
 import com.oyeai.ai.Brain
 import com.oyeai.ai.NoKeyException
+import com.oyeai.social.SocialActions
+import com.oyeai.social.SocialCommand
+import com.oyeai.social.SocialCommands
 import com.oyeai.voice.SpeechInput
 import com.oyeai.voice.Speaker
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +70,13 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     fun send(text: String) {
         val clean = text.trim()
-        if (clean.isEmpty() || _busy.value) return
+        if (clean.isEmpty()) return
+        // Social commands such as "stop" must work even while the AI is busy.
+        SocialCommands.parse(clean)?.let { command ->
+            runSocial(clean, command)
+            return
+        }
+        if (_busy.value) return
         append(Role.User, clean)
         _busy.value = true
 
@@ -96,6 +105,18 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 append(Role.Assistant, message)
             }
             _busy.value = false
+        }
+    }
+
+    private fun runSocial(text: String, command: SocialCommand) {
+        append(Role.User, text)
+        viewModelScope.launch {
+            val reply = SocialActions.run(getApplication(), command)
+            append(Role.Assistant, reply)
+            if (settings.speakReplies) {
+                val lang = settings.language.takeIf { it != "auto" } ?: "en"
+                speaker.speak(reply, localeFor(lang))
+            }
         }
     }
 

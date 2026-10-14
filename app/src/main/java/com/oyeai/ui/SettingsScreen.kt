@@ -45,6 +45,12 @@ import com.oyeai.R
 import com.oyeai.voice.ListenService
 import com.oyeai.ai.PROVIDERS
 import com.oyeai.service.AgentService
+import com.oyeai.social.AccessibilityStatus
+import com.oyeai.social.SocialControl
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Slider
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -291,6 +297,52 @@ fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit = {}) {
             ) { Text(stringResource(R.string.allow_mic)) }
 
             Text(stringResource(R.string.limits), style = MaterialTheme.typography.bodySmall)
+
+            Text(stringResource(R.string.social_title), style = MaterialTheme.typography.titleMedium)
+            Card {
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    var interval by remember { mutableStateOf(settings.scrollIntervalMs / 1000f) }
+                    Text(stringResource(R.string.social_interval_setting, interval.roundToInt()))
+                    Slider(
+                        value = interval,
+                        onValueChange = { interval = it },
+                        valueRange = 3f..20f,
+                        steps = 15,
+                        onValueChangeFinished = {
+                            SocialControl.setSpeed(context, (interval * 1000f).roundToLong())
+                        }
+                    )
+                    var minutes by remember { mutableStateOf(settings.maxSessionMinutes) }
+                    Text(stringResource(R.string.social_session_setting, minutes))
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        listOf(5, 10, 15, 30, 60).forEach { m ->
+                            FilterChip(
+                                selected = minutes == m,
+                                onClick = {
+                                    minutes = m
+                                    settings.maxSessionMinutes = m
+                                },
+                                label = { Text("$m") }
+                            )
+                        }
+                    }
+                    Text(stringResource(R.string.accessibility_status), style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        stringResource(
+                            when (SocialControl.accessibilityStatus(context)) {
+                                AccessibilityStatus.On -> R.string.acc_on
+                                AccessibilityStatus.Starting -> R.string.acc_starting
+                                AccessibilityStatus.Off -> R.string.acc_off
+                            }
+                        ),
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    OutlinedButton(onClick = { openAccessibilitySettings(context) }, modifier = Modifier.fillMaxWidth()) {
+                        Text(stringResource(R.string.acc_open))
+                    }
+                    Text(stringResource(R.string.social_privacy), style = MaterialTheme.typography.bodySmall)
+                }
+            }
 
             OutlinedButton(
                 onClick = onOpenAbout,
