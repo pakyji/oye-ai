@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Oye AI</string>
+    <string name="greeting">Ciao! Sono Oye, il tuo assistente personale. Dimmi cosa devo fare, in inglese, italiano o urdu.</string>
+    <string name="chat_hint">Scrivi o parla…</string>
+    <string name="send">Invia</string>
+    <string name="speak_button">Parla</string>
+    <string name="settings">Impostazioni</string>
+    <string name="back">Indietro</string>
+    <string name="confirm">Conferma</string>
+    <string name="working">In corso…</string>
+    <string name="mic_needed">Serve il permesso del microfono per ascoltare.</string>
+    <string name="no_speech">Il riconoscimento vocale non è disponibile su questo dispositivo.</string>
+    <string name="heard_nothing">Non ho capito.</string>
+    <string name="no_key">Aggiungi una chiave API nelle impostazioni per iniziare.</string>
+    <string name="language">Lingua</string>
+    <string name="lang_auto">Automatica (come parli tu)</string>
+    <string name="ai_providers">Provider AI</string>
+    <string name="provider_first">Usato per primo</string>
+    <string name="api_key">Chiave API</string>
+    <string name="model">Modello</string>
+    <string name="save">Salva</string>
+    <string name="saved">Salvato</string>
+    <string name="get_key">Ottieni una chiave</string>
+    <string name="background">Esegui in background</string>
+    <string name="start_on_boot">Avvia all\'accensione del telefono</string>
+    <string name="speak_replies">Leggi le risposte</string>
+    <string name="permissions">Permessi</string>
+    <string name="allow_phone">Consenti contatti e chiamate</string>
+    <string name="allow_mic">Consenti microfono</string>
+    <string name="limits">Limiti: non posso chiudere forzatamente le app in uso, e non posso inviare messaggi WhatsApp finché non tocchi tu Invia.</string>
+    <string name="agent_channel">Oye AI in background</string>
+    <string name="agent_running">Oye è pronto in background</string>
+</resources>

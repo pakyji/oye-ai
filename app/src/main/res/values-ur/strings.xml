@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">اوئے اے آئی</string>
+    <string name="greeting">ہیلو! میں اوئے ہوں، آپ کی ذاتی معاون۔ بتائیں کیا کرنا ہے، انگریزی، اطالوی یا اردو میں۔</string>
+    <string name="chat_hint">لکھیں یا بولیں…</string>
+    <string name="send">بھیجیں</string>
+    <string name="speak_button">بولیں</string>
+    <string name="settings">ترتیبات</string>
+    <string name="back">واپس</string>
+    <string name="confirm">تصدیق کریں</string>
+    <string name="working">کام جاری ہے…</string>
+    <string name="mic_needed">سننے کے لیے مائیک کی اجازت درکار ہے۔</string>
+    <string name="no_speech">اس فون پر آواز پہچاننے کی سہولت دستیاب نہیں۔</string>
+    <string name="heard_nothing">میں سمجھ نہیں سکا۔</string>
+    <string name="no_key">شروع کرنے کے لیے ترتیبات میں API کلید شامل کریں۔</string>
+    <string name="language">زبان</string>
+    <string name="lang_auto">خودکار (آپ کی زبان کے مطابق)</string>
+    <string name="ai_providers">AI فراہم کنندگان</string>
+    <string name="provider_first">پہلے استعمال ہوگا</string>
+    <string name="api_key">API کلید</string>
+    <string name="model">ماڈل</string>
+    <string name="save">محفوظ کریں</string>
+    <string name="saved">محفوظ ہو گیا</string>
+    <string name="get_key">کلید حاصل کریں</string>
+    <string name="background">پس منظر میں چلائیں</string>
+    <string name="start_on_boot">فون آن ہونے پر شروع کریں</string>
+    <string name="speak_replies">جوابات بولیں</string>
+    <string name="permissions">اجازتیں</string>
+    <string name="allow_phone">رابطوں اور کالز کی اجازت دیں</string>
+    <string name="allow_mic">مائیک کی اجازت دیں</string>
+    <string name="limits">حدود: میں استعمال ہونے والی ایپس کو زبردستی بند نہیں کر سکتا، اور آپ کے خود بھیجنے تک واٹس ایپ پیغام نہیں بھیج سکتا۔</string>
+    <string name="agent_channel">پس منظر میں اوئے AI</string>
+    <string name="agent_running">اوئے پس منظر میں تیار ہے</string>
+</resources>
