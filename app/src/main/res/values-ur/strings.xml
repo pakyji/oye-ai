@@ -31,4 +31,14 @@
     <string name="limits">حدود: میں استعمال ہونے والی ایپس کو زبردستی بند نہیں کر سکتا، اور آپ کے خود بھیجنے تک واٹس ایپ پیغام نہیں بھیج سکتا۔</string>
     <string name="agent_channel">پس منظر میں اوئے AI</string>
     <string name="agent_running">اوئے پس منظر میں تیار ہے</string>
+    <string name="listen_for_oye">\"اوئے\" سنیں</string>
+    <string name="listen_hint">\"اوئے\" کہیں اور پھر کوئی حکم دیں۔ اوئے آواز میں جواب دے گا۔ اطلاع کا نظر آنا ضروری ہے۔</string>
+    <string name="listen_notification">\"اوئے\" سن رہا ہے</string>
+    <string name="listen_stop">بند کریں</string>
+    <string name="listen_channel">آواز سے سننا</string>
+    <string name="actions_channel">آواز کے اعمال</string>
+    <string name="action_run">چلائیں</string>
+    <string name="action_confirm">تصدیق کریں</string>
+    <string name="voice_offer">چلانے کے لیے ٹیپ کریں: %1$s</string>
+    <string name="action_expired">یہ عمل پہلے ہو چکا ہے یا ختم ہو گیا ہے۔</string>
 </resources>

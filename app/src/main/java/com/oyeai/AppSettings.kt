@@ -41,6 +41,11 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean("start_on_boot", false)
         set(value) = prefs.edit().putBoolean("start_on_boot", value).apply()
 
+    /** Background "Oye" listening, started and stopped from Settings. */
+    var listenForOye: Boolean
+        get() = prefs.getBoolean("listen_for_oye", false)
+        set(value) = prefs.edit().putBoolean("listen_for_oye", value).apply()
+
     var speakReplies: Boolean
         get() = prefs.getBoolean("speak_replies", true)
         set(value) = prefs.edit().putBoolean("speak_replies", value).apply()

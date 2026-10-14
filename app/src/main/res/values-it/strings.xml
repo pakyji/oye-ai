@@ -31,4 +31,14 @@
     <string name="limits">Limiti: non posso chiudere forzatamente le app in uso, e non posso inviare messaggi WhatsApp finché non tocchi tu Invia.</string>
     <string name="agent_channel">Oye AI in background</string>
     <string name="agent_running">Oye è pronto in background</string>
+    <string name="listen_for_oye">Ascolta \"Oye\"</string>
+    <string name="listen_hint">Di \"Oye\" seguito da un comando. Oye risponde a voce. Serve che la notifica resti visibile.</string>
+    <string name="listen_notification">In ascolto di \"Oye\"</string>
+    <string name="listen_stop">Ferma</string>
+    <string name="listen_channel">Ascolto vocale</string>
+    <string name="actions_channel">Azioni vocali</string>
+    <string name="action_run">Esegui</string>
+    <string name="action_confirm">Conferma</string>
+    <string name="voice_offer">Tocca per: %1$s</string>
+    <string name="action_expired">Questa azione è già stata eseguita o è scaduta.</string>
 </resources>

@@ -31,4 +31,14 @@
     <string name="limits">Limits: I can\'t force-close apps you are using, and I can\'t send WhatsApp messages until you tap Send yourself.</string>
     <string name="agent_channel">Oye AI in background</string>
     <string name="agent_running">Oye is ready in the background</string>
+    <string name="listen_for_oye">Listen for \"Oye\"</string>
+    <string name="listen_hint">Say \"Oye\" followed by a command. Oye answers out loud. Needs the notification to stay visible.</string>
+    <string name="listen_notification">Listening for \"Oye\"</string>
+    <string name="listen_stop">Stop</string>
+    <string name="listen_channel">Voice listening</string>
+    <string name="actions_channel">Voice actions</string>
+    <string name="action_run">Run</string>
+    <string name="action_confirm">Confirm</string>
+    <string name="voice_offer">Tap to: %1$s</string>
+    <string name="action_expired">This action has already been done or has expired.</string>
 </resources>

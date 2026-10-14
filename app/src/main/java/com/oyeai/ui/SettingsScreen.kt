@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.oyeai.AppSettings
 import com.oyeai.R
+import com.oyeai.voice.ListenService
 import com.oyeai.ai.PROVIDERS
 import com.oyeai.service.AgentService
 
@@ -75,6 +76,20 @@ fun SettingsScreen(onBack: () -> Unit) {
     val micPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { }
+
+    var listening by remember { mutableStateOf(settings.listenForOye) }
+
+    fun enableListening() {
+        settings.listenForOye = true
+        listening = true
+        ListenService.start(context)
+    }
+
+    val listenPermission = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) enableListening() else listening = false
+    }
 
     val languages = listOf(
         "auto" to stringResource(R.string.lang_auto),
@@ -227,6 +242,39 @@ fun SettingsScreen(onBack: () -> Unit) {
                             }
                         )
                     }
+                }
+            }
+
+            Text(stringResource(R.string.listen_for_oye), style = MaterialTheme.typography.titleMedium)
+            Card {
+                Column(modifier = Modifier.padding(8.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(stringResource(R.string.listen_for_oye), modifier = Modifier.weight(1f))
+                        Switch(
+                            checked = listening,
+                            onCheckedChange = { on ->
+                                if (!on) {
+                                    listening = false
+                                    settings.listenForOye = false
+                                    ListenService.stop(context)
+                                } else {
+                                    val hasMic = ContextCompat.checkSelfPermission(
+                                        context, Manifest.permission.RECORD_AUDIO
+                                    ) == PackageManager.PERMISSION_GRANTED
+                                    if (hasMic) enableListening()
+                                    else listenPermission.launch(Manifest.permission.RECORD_AUDIO)
+                                }
+                            }
+                        )
+                    }
+                    Text(
+                        stringResource(R.string.listen_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(horizontal = 8.dp)
+                    )
                 }
             }
 
