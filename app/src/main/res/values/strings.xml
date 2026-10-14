@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Oye AI</string>
-    <string name="greeting">Hi! I\'m Oye, your personal assistant. Tell me what to do, in English, Italian or Urdu.</string>
+    <string name="app_name">OYE</string>
+    <string name="greeting">Hi! I\'m OYE, your personal assistant. Tell me what to do, in English, Italian or Urdu.</string>
     <string name="chat_hint">Type or speak…</string>
     <string name="send">Send</string>
     <string name="speak_button">Speak</string>
@@ -41,4 +41,16 @@
     <string name="action_confirm">Confirm</string>
     <string name="voice_offer">Tap to: %1$s</string>
     <string name="action_expired">This action has already been done or has expired.</string>
+    <string name="creator_credit">Developed by Professor</string>
+    <string name="splash_tagline">Your voice, your assistant</string>
+    <string name="about_button">About OYE and credits</string>
+    <string name="about_title">About OYE</string>
+    <string name="about_intro">OYE is a personal voice and chat assistant for Android. It answers in Italian, English and Urdu, and can act on your phone when you ask.</string>
+    <string name="app_info">App information</string>
+    <string name="info_version">Version</string>
+    <string name="info_package">Package</string>
+    <string name="info_min_android">Requires Android 8.0 or newer</string>
+    <string name="info_license">License: MIT</string>
+    <string name="privacy_title">Permissions and privacy</string>
+    <string name="privacy_body">OYE uses the microphone only when you turn on listening or tap the mic. Contacts and calls are used only when you ask for them. Social media control only scrolls. It does not read, store or send posts, messages or screen text, and does not record the screen.</string>
 </resources>

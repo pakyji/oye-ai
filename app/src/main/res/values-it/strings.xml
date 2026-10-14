@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Oye AI</string>
-    <string name="greeting">Ciao! Sono Oye, il tuo assistente personale. Dimmi cosa devo fare, in inglese, italiano o urdu.</string>
+    <string name="app_name">OYE</string>
+    <string name="greeting">Ciao! Sono OYE, il tuo assistente personale. Dimmi cosa devo fare, in inglese, italiano o urdu.</string>
     <string name="chat_hint">Scrivi o parla…</string>
     <string name="send">Invia</string>
     <string name="speak_button">Parla</string>
@@ -41,4 +41,16 @@
     <string name="action_confirm">Conferma</string>
     <string name="voice_offer">Tocca per: %1$s</string>
     <string name="action_expired">Questa azione è già stata eseguita o è scaduta.</string>
+    <string name="creator_credit">Sviluppato da Professor</string>
+    <string name="splash_tagline">La tua voce, il tuo assistente</string>
+    <string name="about_button">Info su OYE e crediti</string>
+    <string name="about_title">Info su OYE</string>
+    <string name="about_intro">OYE è un assistente personale vocale e in chat per Android. Risponde in italiano, inglese e urdu e può agire sul telefono quando glielo chiedi.</string>
+    <string name="app_info">Informazioni app</string>
+    <string name="info_version">Versione</string>
+    <string name="info_package">Pacchetto</string>
+    <string name="info_min_android">Richiede Android 8.0 o successivo</string>
+    <string name="info_license">Licenza: MIT</string>
+    <string name="privacy_title">Permessi e privacy</string>
+    <string name="privacy_body">OYE usa il microfono solo quando attivi l\'ascolto o tocchi il microfono. Contatti e chiamate vengono usati solo quando li chiedi. Il controllo dei social si limita a scorrere: non legge, non salva e non invia post, messaggi o testo dello schermo, e non registra lo schermo.</string>
 </resources>

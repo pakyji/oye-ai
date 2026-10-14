@@ -1,4 +1,6 @@
-# Oye AI
+# OYE
+
+> Developed by Professor
 
 A personal AI assistant for Android. It listens or reads what you type, answers in
 **Italian, English or Urdu**, and can act on your phone: open apps, call people,
@@ -9,11 +11,11 @@ prepare WhatsApp messages, and open links. It can keep running in the background
 1. Open the **Releases** page of this repository on your phone.
 2. Download `app-release.apk` from the latest release.
 3. Allow installing from this source when Android asks, then install.
-4. Open Oye AI, go to **Settings**, paste at least one AI provider key, and choose it.
+4. Open OYE, go to **Settings**, paste at least one AI provider key, and choose it.
 
 ## AI providers
 
-Add keys for as many providers as you like. Oye uses the selected provider first and
+Add keys for as many providers as you like. OYE uses the selected provider first and
 falls back to the others if one fails. Supported: Pollinations, OpenAI, Groq, Google Gemini,
 OpenRouter, Mistral, DeepSeek and xAI. Models can be changed per provider in Settings.
 
@@ -32,7 +34,7 @@ Calls, WhatsApp messages and closing apps ask for your confirmation first.
 ## Limits (be aware)
 
 - Android does not let an app force-close another app you are using.
-- Oye cannot tap or type inside other apps yet. WhatsApp sending needs you to tap Send.
+- OYE cannot tap or type inside other apps yet. WhatsApp sending needs you to tap Send.
 - Offline mode (a model that runs on the phone) is not included in this version.
 - Building web apps is not included in this version.
 - Speech recognition and voices for Urdu depend on the Google app and voice data on your phone.

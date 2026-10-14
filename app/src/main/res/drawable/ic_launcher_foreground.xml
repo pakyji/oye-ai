@@ -1,13 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Soft glow behind the ring -->
     <path
-        android:fillColor="#8B7CFF"
-        android:pathData="M54,28 A26,26 0 1,1 53.99,28 Z" />
+        android:strokeColor="#3322D3EE"
+        android:strokeWidth="13"
+        android:strokeLineCap="round"
+        android:pathData="M54,28 A26,26 0 1,1 53.99,28" />
+    <!-- Cyan-violet ring -->
     <path
-        android:fillColor="#0E0F13"
-        android:pathData="M54,42 A12,12 0 1,1 53.99,42 Z" />
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M54,28 A26,26 0 1,1 53.99,28">
+        <aapt:attr name="android:strokeColor">
+            <gradient
+                android:type="sweep"
+                android:centerX="54"
+                android:centerY="54"
+                android:startColor="#22D3EE"
+                android:centerColor="#8B7CFF"
+                android:endColor="#22D3EE" />
+        </aapt:attr>
+    </path>
+    <!-- Light point at the upper right -->
+    <path
+        android:fillColor="#5922D3EE"
+        android:pathData="M80.4,36.6 m-4.6,0 a4.6,4.6 0 1,0 9.2,0 a4.6,4.6 0 1,0 -9.2,0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M80.4,36.6 m-2.4,0 a2.4,2.4 0 1,0 4.8,0 a2.4,2.4 0 1,0 -4.8,0" />
 </vector>

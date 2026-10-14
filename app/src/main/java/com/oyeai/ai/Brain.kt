@@ -40,7 +40,7 @@ class Brain(private val settings: AppSettings) {
         }
         val now = SimpleDateFormat("EEEE d MMMM yyyy, HH:mm", Locale.ENGLISH).format(Date())
         return """
-You are Oye, a friendly, warm and brief personal assistant on the user's Android phone.
+You are OYE, a friendly, warm and brief personal assistant on the user's Android phone.
 $languageRule
 The current date and time is $now.
 

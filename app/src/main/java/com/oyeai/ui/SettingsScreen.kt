@@ -48,7 +48,7 @@ import com.oyeai.service.AgentService
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit = {}) {
     val context = LocalContext.current
     val uriHandler = LocalUriHandler.current
     val settings = remember { AppSettings(context) }
@@ -291,6 +291,19 @@ fun SettingsScreen(onBack: () -> Unit) {
             ) { Text(stringResource(R.string.allow_mic)) }
 
             Text(stringResource(R.string.limits), style = MaterialTheme.typography.bodySmall)
+
+            OutlinedButton(
+                onClick = onOpenAbout,
+                modifier = Modifier.fillMaxWidth()
+            ) { Text(stringResource(R.string.about_button)) }
+
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                OyeWordmark(size = 18)
+                CreatorCredit()
+            }
         }
     }
 }

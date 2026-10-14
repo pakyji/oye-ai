@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="600" viewBox="0 0 1200 600">
+  <rect width="1200" height="600" fill="#0E0F13"/>
+  <!-- Mark: soft glow, then the bright cyan ring and a light point -->
+  <path d="M300,180 A120,120 0 0,1 300,420 A120,120 0 0,1 300,180" fill="none" stroke="#0E7C8C" stroke-width="40"/>
+  <path d="M300,180 A120,120 0 0,1 300,420 A120,120 0 0,1 300,180" fill="none" stroke="#22D3EE" stroke-width="14"/>
+  <circle cx="385" cy="215" r="16" fill="#22D3EE"/>
+  <circle cx="385" cy="215" r="8" fill="#FFFFFF"/>
+  <!-- Wordmark and credit -->
+  <text x="520" y="318" font-family="Helvetica, Arial, sans-serif" font-size="150" font-weight="300" fill="#8B7CFF">OYE</text>
+  <text x="526" y="380" font-family="Helvetica, Arial, sans-serif" font-size="28" fill="#B8BCD0">Developed by Professor</text>
+</svg>

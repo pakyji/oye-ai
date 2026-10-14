@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">اوئے اے آئی</string>
-    <string name="greeting">ہیلو! میں اوئے ہوں، آپ کی ذاتی معاون۔ بتائیں کیا کرنا ہے، انگریزی، اطالوی یا اردو میں۔</string>
+    <string name="app_name">OYE</string>
+    <string name="greeting">ہیلو! میں OYE ہوں، آپ کا ذاتی معاون۔ انگریزی، اطالوی یا اردو میں بتائیں کیا کرنا ہے۔</string>
     <string name="chat_hint">لکھیں یا بولیں…</string>
     <string name="send">بھیجیں</string>
     <string name="speak_button">بولیں</string>
@@ -41,4 +41,16 @@
     <string name="action_confirm">تصدیق کریں</string>
     <string name="voice_offer">چلانے کے لیے ٹیپ کریں: %1$s</string>
     <string name="action_expired">یہ عمل پہلے ہو چکا ہے یا ختم ہو گیا ہے۔</string>
+    <string name="creator_credit">Professor کی جانب سے تیار کردہ</string>
+    <string name="splash_tagline">آپ کی آواز، آپ کا معاون</string>
+    <string name="about_button">OYE کے بارے میں اور کریڈٹس</string>
+    <string name="about_title">OYE کے بارے میں</string>
+    <string name="about_intro">OYE ایک ذاتی آواز اور چیٹ معاون ہے۔ یہ اطالوی، انگریزی اور اردو میں جواب دیتا ہے، اور آپ کے کہنے پر فون پر کام بھی کر سکتا ہے۔</string>
+    <string name="app_info">ایپ کی معلومات</string>
+    <string name="info_version">ورژن</string>
+    <string name="info_package">پیکیج</string>
+    <string name="info_min_android">Android 8.0 یا اس سے نیا درکار ہے</string>
+    <string name="info_license">لائسنس: MIT</string>
+    <string name="privacy_title">اجازتیں اور رازداری</string>
+    <string name="privacy_body">OYE مائیکروفون صرف اس وقت استعمال کرتا ہے جب آپ سننا آن کریں یا مائیک کو ٹیپ کریں۔ رابطے اور کالیں صرف آپ کے کہنے پر استعمال ہوتی ہیں۔ سوشل میڈیا کنٹرول صرف اسکرول کرتا ہے؛ یہ پوسٹس، پیغامات یا اسکرین کا متن نہ پڑھتا ہے، نہ محفوظ کرتا ہے، نہ بھیجتا ہے، اور اسکرین ریکارڈ نہیں کرتا۔</string>
 </resources>
