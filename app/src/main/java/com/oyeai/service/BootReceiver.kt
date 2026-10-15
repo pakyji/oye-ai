@@ -1,6 +1,10 @@
 package com.oyeai.service
 
+import android.Manifest
 import android.content.BroadcastReceiver
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
+import com.oyeai.voice.ListenService
 import android.content.Context
 import android.content.Intent
 import com.oyeai.AppSettings
@@ -10,9 +14,20 @@ class BootReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        com.oyeai.control.Reminders.rescheduleAll(context)
         val settings = AppSettings(context)
         if (settings.runInBackground && settings.startOnBoot) {
             AgentService.start(context)
+        }
+        // Restart the "Oye" listener too, if the user had it on before the restart.
+        val micOk = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED
+        if (settings.listenForOye && micOk) {
+            try {
+                ListenService.start(context)
+            } catch (e: Exception) {
+                // Android can refuse a microphone service started from the background. The user can turn it on again in the app.
+            }
         }
     }
 }

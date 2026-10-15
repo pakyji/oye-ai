@@ -178,4 +178,5 @@
     <string name="launch_offer">Tap to open: %s</string>
     <string name="launch_done">Opened.</string>
     <string name="action_open">Open</string>
+    <string name="reminder_set">Reminder set for %1$d minutes from now, at %2$s.</string>
 </resources>

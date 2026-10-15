@@ -55,7 +55,7 @@ class OyeAccessibilityService : AccessibilityService() {
             onResult(ScrollResult.NoActiveWindow)
             return
         }
-        val supported = root.packageName?.toString() in SUPPORTED_PACKAGES
+        val supported = isSupportedPackage(root.packageName?.toString())
         if (!supported) {
             root.recycleCompat()
             onResult(ScrollResult.UnsupportedApp)
@@ -104,7 +104,7 @@ class OyeAccessibilityService : AccessibilityService() {
      */
     fun findLabel(label: String, click: Boolean): LabelResult {
         val root = rootInActiveWindow ?: return LabelResult.NoWindow
-        val supported = root.packageName?.toString() in SUPPORTED_PACKAGES
+        val supported = isSupportedPackage(root.packageName?.toString())
         if (!supported) {
             root.recycleCompat()
             return LabelResult.Unsupported
@@ -191,11 +191,27 @@ class OyeAccessibilityService : AccessibilityService() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) recycle()
     }
 
+    /** Instagram, Facebook, YouTube, and the movie app whose label is Castle. Other apps are never touched. */
+    private fun isSupportedPackage(pkg: String?): Boolean {
+        if (pkg.isNullOrEmpty()) return false
+        if (pkg in SUPPORTED_PACKAGES) return true
+        val pm = packageManager
+        val query = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+        return pm.queryIntentActivities(query, 0).any { info ->
+            info.activityInfo.packageName == pkg &&
+                info.loadLabel(pm).toString().equals(MOVIE_APP_LABEL, ignoreCase = true)
+        }
+    }
+
     companion object {
-        /** The only apps OYE will scroll. */
+        const val MOVIE_APP_LABEL = "Castle"
+        private const val YOUTUBE_PACKAGE = "com.google.android.youtube"
+
+        /** The apps OYE will scroll: Instagram, Facebook, YouTube (and Castle by label). */
         val SUPPORTED_PACKAGES = setOf(
             SocialApp.INSTAGRAM.packageName,
-            SocialApp.FACEBOOK.packageName
+            SocialApp.FACEBOOK.packageName,
+            YOUTUBE_PACKAGE
         )
 
         private const val MAX_DEPTH = 12

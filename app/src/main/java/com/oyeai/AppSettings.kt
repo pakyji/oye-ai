@@ -7,6 +7,9 @@ import androidx.security.crypto.MasterKey
 import com.oyeai.ai.PROVIDERS
 import com.oyeai.ai.ProviderSpec
 import com.oyeai.ai.providerById
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.UUID
 
 /**
  * Plain preferences for normal settings, and encrypted preferences for API keys.
@@ -60,12 +63,25 @@ class AppSettings(context: Context) {
         get() = prefs.getBoolean("speak_replies", true)
         set(value) = prefs.edit().putBoolean("speak_replies", value).apply()
 
+    var githubRepo: String
+        get() = prefs.getString("github_repo", "") ?: ""
+        set(value) = prefs.edit().putString("github_repo", value.trim()).apply()
+
+    var githubBranch: String
+        get() = prefs.getString("github_branch", "main") ?: "main"
+        set(value) = prefs.edit().putString("github_branch", value.trim().ifBlank { "main" }).apply()
+
+    /** The GitHub token is kept in the encrypted store only. It is never shown or logged. */
+    var githubToken: String
+        get() = secure.getString("github.token", "") ?: ""
+        set(value) = secure.edit().putString("github.token", value.trim()).apply()
+
     fun key(providerId: String): String = secure.getString("key.$providerId", "") ?: ""
 
     fun model(providerId: String): String {
         val saved = secure.getString("model.$providerId", "") ?: ""
         if (saved.isNotBlank()) return saved
-        return providerById(providerId)?.defaultModel ?: ""
+        return allProviders().firstOrNull { it.id == providerId }?.defaultModel ?: ""
     }
 
     fun savedModel(providerId: String): String = secure.getString("model.$providerId", "") ?: ""
@@ -77,9 +93,48 @@ class AppSettings(context: Context) {
             .apply()
     }
 
+    /** Providers added by the user. Only the URL and model are stored here; keys stay encrypted. */
+    fun customProviders(): List<ProviderSpec> {
+        val array = JSONArray(prefs.getString("custom_providers", "[]") ?: "[]")
+        return (0 until array.length()).map { i ->
+            val o = array.getJSONObject(i)
+            ProviderSpec(o.getString("id"), o.getString("name"), o.getString("baseUrl"), o.getString("model"), "")
+        }
+    }
+
+    fun addCustomProvider(name: String, baseUrl: String, model: String, apiKey: String): ProviderSpec {
+        val spec = ProviderSpec(
+            "custom-" + UUID.randomUUID().toString().take(8),
+            name.trim(), baseUrl.trim().trimEnd('/'), model.trim(), ""
+        )
+        val array = JSONArray(prefs.getString("custom_providers", "[]") ?: "[]")
+        array.put(
+            JSONObject().put("id", spec.id).put("name", spec.name)
+                .put("baseUrl", spec.baseUrl).put("model", spec.defaultModel)
+        )
+        prefs.edit().putString("custom_providers", array.toString()).apply()
+        saveProvider(spec.id, apiKey, spec.defaultModel)
+        return spec
+    }
+
+    fun removeCustomProvider(id: String) {
+        val array = JSONArray(prefs.getString("custom_providers", "[]") ?: "[]")
+        val kept = JSONArray()
+        for (i in 0 until array.length()) {
+            val o = array.getJSONObject(i)
+            if (o.getString("id") != id) kept.put(o)
+        }
+        prefs.edit().putString("custom_providers", kept.toString()).apply()
+        secure.edit().remove("key.$id").remove("model.$id").apply()
+        if (selectedProvider == id) selectedProvider = "pollinations"
+    }
+
+    /** Built-in providers first, then the user's own. */
+    fun allProviders(): List<ProviderSpec> = PROVIDERS + customProviders()
+
     /** Providers that have a key, with the selected one first. */
     fun providerOrder(): List<ProviderSpec> {
-        val withKey = PROVIDERS.filter { key(it.id).isNotBlank() }
+        val withKey = allProviders().filter { key(it.id).isNotBlank() }
         val selected = withKey.firstOrNull { it.id == selectedProvider }
         return if (selected == null) withKey else listOf(selected) + withKey.filter { it.id != selectedProvider }
     }

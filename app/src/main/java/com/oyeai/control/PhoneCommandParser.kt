@@ -28,6 +28,8 @@ object PhoneCommandParser {
             if (name.isNotEmpty()) return PhoneCommand.Message(name, body)
         }
 
+        reminderCommand(text)?.let { return it }
+
         if (isStopAll(t)) return PhoneCommand.StopAll
 
         SocialCommands.parse(text)?.let { social: SocialCommand ->
@@ -68,9 +70,9 @@ object PhoneCommandParser {
             nameTokens(t).joinToString(" ").takeIf { it.isNotEmpty() }?.let { return PhoneCommand.FindLabel(it) }
         }
         if (has(t, SCROLL)) {
-            val down = has(t, DOWN_WORDS)
-            val up = has(t, UP_WORDS)
-            if (down != up) return PhoneCommand.ScrollScreen(up)
+            // "scroll karo" with no direction means down, the usual way to read a feed.
+            val up = has(t, UP_WORDS) && !has(t, DOWN_WORDS)
+            return PhoneCommand.ScrollScreen(up)
         }
         if (has(t, OPEN)) {
             nameTokens(t).joinToString(" ").takeIf { it.isNotEmpty() }?.let { return PhoneCommand.OpenApp(it) }
@@ -180,4 +182,27 @@ object PhoneCommandParser {
         "کو", "کی", "کا", "کے", "میں", "پر", "کر", "کرو", "کریں", "دو", "میری", "مجھے", "اس", "ایپ",
         "को", "की", "का", "में", "पर", "के", "करो", "दो", "मेरी", "मेरा", "और", "इस", "ऐप"
     )
+}
+
+private val REMIND_BEFORE = Regex(
+    "^(?:oye[ ,]*)?(\\d+)\\s*(minutes?|minuti|mins?|hours?|ore|ora|ghante|ghanta)\\s*(?:baad|dopo|later)?\\s*(?:mein|me|in)?\\s*(?:yaad dilao|yaad dilana|ricordami|remind me)\\s*(?:to|ko|di|che)?\\s*(.+)$"
+)
+private val REMIND_AFTER = Regex(
+    "^(?:oye[ ,]*)?(?:remind me|yaad dilao|ricordami)\\s*(?:in\\s*)?(\\d+)\\s*(minutes?|minuti|mins?|hours?|ore|ora|ghante|ghanta)\\s*(?:later|baad|dopo)?\\s*(?:to|ko|di|che)?\\s*(.+)$"
+)
+
+/** "15 minute baad yaad dilao paani pee", "remind me in 2 hours to call mom". Null for anything else. */
+private fun reminderCommand(text: String): PhoneCommand.Remind? {
+    val lower = text.lowercase(Locale.ROOT).trim().trimEnd('.', '!', '?')
+    val m = REMIND_BEFORE.find(lower) ?: REMIND_AFTER.find(lower) ?: return null
+    val amount = m.groupValues[1].toIntOrNull() ?: return null
+    val unit = m.groupValues[2]
+    val isHours = unit.startsWith("h") || unit.startsWith("ore") || unit.startsWith("ora") || unit.startsWith("ghant")
+    val minutes = if (isHours) amount * 60 else amount
+    if (minutes !in 1..1440) return null
+    // Keep the user's own capitals: take the body from the original text.
+    val original = text.trim().trimEnd('.', '!', '?')
+    val body = original.takeLast(m.groupValues[3].length).trim()
+    if (body.isEmpty()) return null
+    return PhoneCommand.Remind(minutes, body)
 }

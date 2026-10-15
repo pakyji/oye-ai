@@ -1,6 +1,7 @@
 package com.oyeai.voice
 
 import android.Manifest
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -52,6 +53,7 @@ class ListenService : Service() {
     private var running = false
     private var busy = false
     private var awaitingCommandUntil = 0L
+    private var lastError: Int? = null
 
     private val restart = Runnable { startRecognizer() }
 
@@ -73,8 +75,8 @@ class ListenService : Service() {
         try {
             startForegroundCompat()
         } catch (e: SecurityException) {
-            // Microphone permission is missing. Android requires startForeground before stopping.
-            settings.listenForOye = false
+            // Android refused a microphone service from the background (after a restart or a kill).
+            // Keep the user's ON setting, so the listener starts again when the app is opened.
             stopSelf()
             return START_NOT_STICKY
         }
@@ -91,6 +93,16 @@ class ListenService : Service() {
     }
 
     private fun startForegroundCompat() {
+        createChannel()
+        val notification = buildNotification(status.ifEmpty { getString(R.string.listen_notification) })
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
+        } else {
+            startForeground(NOTIFICATION_ID, notification)
+        }
+    }
+
+    private fun buildNotification(text: String): Notification {
         val stop = PendingIntent.getService(
             this, 1,
             Intent(this, ListenService::class.java).setAction(ACTION_STOP),
@@ -100,20 +112,21 @@ class ListenService : Service() {
             this, 0, Intent(this, MainActivity::class.java),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
-        createChannel()
-        val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+        return NotificationCompat.Builder(this, CHANNEL_ID)
             .setSmallIcon(android.R.drawable.ic_btn_speak_now)
             .setContentTitle(getString(R.string.app_name))
-            .setContentText(getString(R.string.listen_notification))
+            .setContentText(text)
             .setContentIntent(open)
             .setOngoing(true)
             .addAction(0, getString(R.string.listen_stop), stop)
             .build()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIFICATION_ID, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_MICROPHONE)
-        } else {
-            startForeground(NOTIFICATION_ID, notification)
-        }
+    }
+
+    /** Shows what the listener is doing in the notification, so a failure is visible without a PC. */
+    private fun updateStatus(text: String) {
+        if (text == status) return
+        status = text
+        getSystemService(NotificationManager::class.java).notify(NOTIFICATION_ID, buildNotification(text))
     }
 
     private fun createChannel() {
@@ -137,6 +150,7 @@ class ListenService : Service() {
         recognizer = rec
         rec.setRecognitionListener(listener)
         rec.startListening(recognizerIntent())
+        updateStatus(getString(R.string.listen_notification))
     }
 
     private fun recognizerIntent(): Intent =
@@ -155,23 +169,42 @@ class ListenService : Service() {
         }
 
         override fun onError(error: Int) {
+            lastError = error
+            updateStatus("Oye ruka: ${errorName(error)} (code $error), dobara try kar raha hoon")
             when (error) {
                 SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> {
                     settings.listenForOye = false
                     stopSelf()
                 }
-                // Silence, no match, busy or network errors: wait a little, then listen again.
+                // The recognizer is still busy with an earlier request: give it more time.
+                SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> restartSoon(BUSY_MS)
+                // Silence, no match, or network errors: wait a little, then listen again.
                 else -> restartSoon(RETRY_MS)
             }
         }
 
-        override fun onReadyForSpeech(params: Bundle?) {}
+        override fun onReadyForSpeech(params: Bundle?) {
+            updateStatus("Sun raha hoon. \"Oye\" bolein")
+        }
         override fun onBeginningOfSpeech() {}
         override fun onRmsChanged(rmsdB: Float) {}
         override fun onBufferReceived(buffer: ByteArray?) {}
         override fun onEndOfSpeech() {}
         override fun onPartialResults(partialResults: Bundle?) {}
         override fun onEvent(eventType: Int, params: Bundle?) {}
+    }
+
+    private fun errorName(error: Int): String = when (error) {
+        SpeechRecognizer.ERROR_NETWORK_TIMEOUT -> "network timeout"
+        SpeechRecognizer.ERROR_NETWORK -> "network"
+        SpeechRecognizer.ERROR_AUDIO -> "mic/audio"
+        SpeechRecognizer.ERROR_SERVER -> "speech server"
+        SpeechRecognizer.ERROR_CLIENT -> "client"
+        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "koi awaaz nahi"
+        SpeechRecognizer.ERROR_NO_MATCH -> "samajh nahi aaya"
+        SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "recognizer busy"
+        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "mic permission nahi"
+        else -> "unknown"
     }
 
     private fun handleSpeech(raw: String) {
@@ -255,6 +288,10 @@ class ListenService : Service() {
         private const val ACTION_STOP = "com.oyeai.voice.STOP_LISTENING"
         private const val FOLLOW_UP_MS = 8_000L
         private const val RETRY_MS = 1_500L
+        private const val BUSY_MS = 3_000L
+
+        /** Last status line, shown in the notification. Kept in memory only. */
+        @Volatile var status: String = ""
         private const val SHORT_MS = 300L
         private const val MS_PER_CHAR = 80L
         private const val MIN_SPEAK_MS = 1_500L

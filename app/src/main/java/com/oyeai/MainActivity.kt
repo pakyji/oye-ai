@@ -2,6 +2,9 @@ package com.oyeai
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
@@ -39,6 +42,18 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         AppVisibility.resumed = true
+        // If the user turned "Listen for Oye" on, restart it whenever the app is in front.
+        // Opening the app is allowed to start the microphone service, so no button press is needed.
+        val settings = AppSettings(this)
+        val micOk = ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) ==
+            PackageManager.PERMISSION_GRANTED
+        if (settings.listenForOye && micOk) {
+            try {
+                com.oyeai.voice.ListenService.start(this)
+            } catch (e: Exception) {
+                // Starting the service failed. The user can turn the setting on again in Settings.
+            }
+        }
     }
 
     override fun onPause() {

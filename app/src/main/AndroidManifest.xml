@@ -96,6 +96,9 @@
             </intent-filter>
         </receiver>
 
+            <receiver
+            android:name="com.oyeai.control.ReminderReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

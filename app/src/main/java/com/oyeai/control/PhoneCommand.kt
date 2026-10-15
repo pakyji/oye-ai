@@ -14,6 +14,7 @@ sealed class PhoneCommand {
     object VolumePanel : PhoneCommand()
     data class Media(val action: MediaAction) : PhoneCommand()
     data class Timer(val minutes: Int) : PhoneCommand()
+    data class Remind(val minutes: Int, val text: String) : PhoneCommand()
     data class Dial(val target: String) : PhoneCommand()
     data class Message(val target: String, val body: String) : PhoneCommand()
     object OpenDownloads : PhoneCommand()

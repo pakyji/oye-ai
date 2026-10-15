@@ -45,6 +45,7 @@ object PhoneCommandRunner {
         PhoneCommand.VolumePanel -> volumePanel(context)
         is PhoneCommand.Media -> mediaKey(context, command.action)
         is PhoneCommand.Timer -> timer(context, command.minutes)
+        is PhoneCommand.Remind -> remind(context, command.minutes, command.text)
         is PhoneCommand.Dial -> dial(context, command.target)
         is PhoneCommand.Message -> message(context, command.target, command.body)
         PhoneCommand.OpenDownloads -> openDownloads(context)
@@ -202,6 +203,12 @@ object PhoneCommandRunner {
         } catch (e: SecurityException) {
             context.getString(R.string.media_failed)
         }
+    }
+
+    private fun remind(context: Context, minutes: Int, text: String): String {
+        val at = Reminders.add(context, minutes, text)
+        val time = java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(at))
+        return context.getString(R.string.reminder_set, minutes, time)
     }
 
     private fun timer(context: Context, minutes: Int): String {

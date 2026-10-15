@@ -66,6 +66,11 @@ class PhoneCommandParserTest {
         assertEquals(PhoneCommand.FindLabel("latest project"), parse("find latest project"))
         assertEquals(PhoneCommand.ScrollScreen(false), parse("scroll down"))
         assertEquals(PhoneCommand.ScrollScreen(true), parse("scroll up"))
+        assertEquals(PhoneCommand.ScrollScreen(false), parse("scroll karo"))
+        assertEquals(PhoneCommand.ScrollScreen(false), parse("OYE, scroll karo."))
+        assertEquals(PhoneCommand.ScrollScreen(true), parse("scroll upar karo"))
+        assertEquals(PhoneCommand.Remind(15, "paani pee"), parse("15 minute baad yaad dilao paani pee"))
+        assertEquals(PhoneCommand.Remind(120, "call Mom"), parse("remind me in 2 hours to call Mom"))
     }
 
     @Test

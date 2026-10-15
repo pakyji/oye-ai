@@ -143,7 +143,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit = {}) {
             }
 
             Text(stringResource(R.string.ai_providers), style = MaterialTheme.typography.titleMedium)
-            PROVIDERS.forEach { spec ->
+            var customList by remember { mutableStateOf(settings.customProviders()) }
+            (PROVIDERS + customList).forEach { spec ->
                 var apiKey by remember(spec.id) { mutableStateOf(settings.key(spec.id)) }
                 var model by remember(spec.id) { mutableStateOf(settings.savedModel(spec.id)) }
                 var saved by remember(spec.id) { mutableStateOf(false) }
@@ -185,14 +186,59 @@ fun SettingsScreen(onBack: () -> Unit, onOpenAbout: () -> Unit = {}) {
                                 settings.saveProvider(spec.id, apiKey, model)
                                 saved = true
                             }) { Text(stringResource(R.string.save)) }
-                            TextButton(onClick = { uriHandler.openUri(spec.keyUrl) }) {
-                                Text(stringResource(R.string.get_key))
+                            if (spec.keyUrl.isNotBlank()) {
+                                TextButton(onClick = { uriHandler.openUri(spec.keyUrl) }) {
+                                    Text(stringResource(R.string.get_key))
+                                }
+                            }
+                            if (spec.id.startsWith("custom-")) {
+                                TextButton(onClick = {
+                                    settings.removeCustomProvider(spec.id)
+                                    customList = settings.customProviders()
+                                }) { Text("Delete") }
                             }
                             if (saved) Text(stringResource(R.string.saved), style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }
             }
+
+            var newName by remember { mutableStateOf("") }
+            var newUrl by remember { mutableStateOf("") }
+            var newModel by remember { mutableStateOf("") }
+            var newKey by remember { mutableStateOf("") }
+            var addError by remember { mutableStateOf("") }
+            Card {
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("Add your own AI provider", style = MaterialTheme.typography.titleSmall)
+                    Text(
+                        "Any service with an OpenAI-compatible chat endpoint. The URL must start with https://",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+                    OutlinedTextField(value = newName, onValueChange = { newName = it }, label = { Text("Name") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = newUrl, onValueChange = { newUrl = it }, label = { Text("Base URL (https://.../v1)") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = newModel, onValueChange = { newModel = it }, label = { Text("Model") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(
+                        value = newKey, onValueChange = { newKey = it }, label = { Text(stringResource(R.string.api_key)) },
+                        visualTransformation = PasswordVisualTransformation(), singleLine = true, modifier = Modifier.fillMaxWidth()
+                    )
+                    if (addError.isNotBlank()) Text(addError, style = MaterialTheme.typography.bodySmall)
+                    Button(onClick = {
+                        when {
+                            newName.isBlank() || newModel.isBlank() -> addError = "Name and model are required."
+                            !newUrl.trim().startsWith("https://") -> addError = "The URL must start with https://"
+                            newKey.isBlank() -> addError = "API key is required."
+                            else -> {
+                                settings.addCustomProvider(newName, newUrl, newModel, newKey)
+                                customList = settings.customProviders()
+                                newName = ""; newUrl = ""; newModel = ""; newKey = ""; addError = ""
+                            }
+                        }
+                    }) { Text("Add provider") }
+                }
+            }
+
+            GitHubCard(settings)
 
             Text(stringResource(R.string.background), style = MaterialTheme.typography.titleMedium)
             Card {
