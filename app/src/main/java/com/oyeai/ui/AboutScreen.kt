@@ -90,8 +90,8 @@ fun AboutScreen(onBack: () -> Unit) {
                 Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     InfoRow(stringResource(R.string.info_version), version)
                     InfoRow(stringResource(R.string.info_package), context.packageName)
-                    InfoRow(stringResource(R.string.info_min_android), "")
-                    InfoRow(stringResource(R.string.info_license), "")
+                    InfoRow(stringResource(R.string.info_min_android), "Android 8.0 (API 26) or newer")
+                    InfoRow(stringResource(R.string.info_license), "MIT")
                 }
             }
 
