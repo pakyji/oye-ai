@@ -184,4 +184,11 @@
     <string name="listen_status_error">Interrotto: %1$s (codice %2$d). Riprovo.</string>
     <string name="listen_unavailable">Ascolto di Oye interrotto: manca il permesso del microfono o il servizio vocale di Google.</string>
     <string name="listen_resume">Tocca per riprendere l\'ascolto di \"Oye\".</string>
+    <string name="update_title">Aggiornamento disponibile</string>
+    <string name="update_text">È pronta una nuova versione di OYE (%s). Installarla ora? Android ti chiederà conferma.</string>
+    <string name="update_install">Installa</string>
+    <string name="update_downloading">Download in corso…</string>
+    <string name="update_later">Più tardi</string>
+    <string name="update_failed">Download non riuscito. Controlla la connessione e riprova.</string>
+    <string name="update_allow_sources">Consenti le installazioni da OYE nelle impostazioni appena aperte, poi tocca di nuovo Installa.</string>
 </resources>

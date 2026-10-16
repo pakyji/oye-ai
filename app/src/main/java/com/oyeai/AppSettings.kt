@@ -20,10 +20,11 @@ class AppSettings(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("oyeai_prefs", Context.MODE_PRIVATE)
 
-    // Created once per process and only when a key or token is first needed, so building
+    // Opened once per process, only when a key or token is first needed, so building
     // AppSettings (which happens often, sometimes on the main thread) stays cheap.
+    // Null when the Android Keystore is broken: keys then read as empty instead of crashing the app.
     private val appContext: Context = context.applicationContext
-    private val secure: SharedPreferences get() = secureStore(appContext)
+    private val secure: SharedPreferences? get() = secureStore(appContext)
 
     var language: String
         get() = prefs.getString("language", "auto") ?: "auto"
@@ -70,24 +71,24 @@ class AppSettings(context: Context) {
 
     /** The GitHub token is kept in the encrypted store only. It is never shown or logged. */
     var githubToken: String
-        get() = secure.getString("github.token", "") ?: ""
-        set(value) = secure.edit().putString("github.token", value.trim()).apply()
+        get() = secure?.getString("github.token", "") ?: ""
+        set(value) { secure?.edit()?.putString("github.token", value.trim())?.apply() }
 
-    fun key(providerId: String): String = secure.getString("key.$providerId", "") ?: ""
+    fun key(providerId: String): String = secure?.getString("key.$providerId", "") ?: ""
 
     fun model(providerId: String): String {
-        val saved = secure.getString("model.$providerId", "") ?: ""
+        val saved = secure?.getString("model.$providerId", "") ?: ""
         if (saved.isNotBlank()) return saved
         return allProviders().firstOrNull { it.id == providerId }?.defaultModel ?: ""
     }
 
-    fun savedModel(providerId: String): String = secure.getString("model.$providerId", "") ?: ""
+    fun savedModel(providerId: String): String = secure?.getString("model.$providerId", "") ?: ""
 
     fun saveProvider(providerId: String, apiKey: String, model: String) {
-        secure.edit()
-            .putString("key.$providerId", apiKey.trim())
-            .putString("model.$providerId", model.trim())
-            .apply()
+        secure?.edit()
+            ?.putString("key.$providerId", apiKey.trim())
+            ?.putString("model.$providerId", model.trim())
+            ?.apply()
     }
 
     /** Providers added by the user. Only the URL and model are stored here; keys stay encrypted. */
@@ -102,6 +103,8 @@ class AppSettings(context: Context) {
     }
 
     fun addCustomProvider(name: String, baseUrl: String, model: String, apiKey: String): ProviderSpec {
+        // Keys are sent as a Bearer token, so only encrypted (https) endpoints are allowed.
+        require(baseUrl.trim().startsWith("https://")) { "The URL must start with https://" }
         val spec = ProviderSpec(
             "custom-" + UUID.randomUUID().toString().take(8),
             name.trim(), baseUrl.trim().trimEnd('/'), model.trim(), ""
@@ -124,7 +127,7 @@ class AppSettings(context: Context) {
             if (o.getString("id") != id) kept.put(o)
         }
         prefs.edit().putString("custom_providers", kept.toString()).apply()
-        secure.edit().remove("key.$id").remove("model.$id").apply()
+        secure?.edit()?.remove("key.$id")?.remove("model.$id")?.apply()
         if (selectedProvider == id) selectedProvider = "pollinations"
     }
 
@@ -142,19 +145,22 @@ class AppSettings(context: Context) {
         private const val SECURE_FILE = "oyeai_secure"
         private val lock = Any()
         @Volatile private var shared: SharedPreferences? = null
+        @Volatile private var failed = false
 
-        private fun secureStore(context: Context): SharedPreferences =
-            shared ?: synchronized(lock) {
-                shared ?: openSecure(context).also { shared = it }
+        /** Opens the encrypted store once. Returns null if the Keystore cannot be used. Never deletes saved keys. */
+        private fun secureStore(context: Context): SharedPreferences? {
+            shared?.let { return it }
+            if (failed) return null
+            synchronized(lock) {
+                shared?.let { return it }
+                return try {
+                    createSecure(context).also { shared = it }
+                } catch (e: Exception) {
+                    failed = true
+                    android.util.Log.e("OyeAI", "Secure storage unavailable", e)
+                    null
+                }
             }
-
-        private fun openSecure(context: Context): SharedPreferences = try {
-            createSecure(context)
-        } catch (e: Exception) {
-            // A damaged Android Keystore entry would make the app crash on every start.
-            // The saved keys cannot be read any more, so start with an empty store instead.
-            context.deleteSharedPreferences(SECURE_FILE)
-            createSecure(context)
         }
 
         private fun createSecure(context: Context): SharedPreferences = EncryptedSharedPreferences.create(

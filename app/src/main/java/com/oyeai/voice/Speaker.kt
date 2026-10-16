@@ -21,18 +21,6 @@ class Speaker(context: Context) {
     /** Callbacks waiting for an utterance to finish, by utterance id. */
     private val waiters = ConcurrentHashMap<String, () -> Unit>()
 
-    init {
-        synchronized(live) { live.add(this) }
-        tts = TextToSpeech(context.applicationContext) { status ->
-            ready = status == TextToSpeech.SUCCESS
-            if (ready) {
-                tts?.setOnUtteranceProgressListener(progressListener)
-                pending?.let { speakNow(it.text, it.locale, it.id) }
-            }
-            pending = null
-        }
-    }
-
     private val progressListener = object : UtteranceProgressListener() {
         override fun onStart(utteranceId: String?) {}
         override fun onDone(utteranceId: String?) = finished(utteranceId)
@@ -42,6 +30,21 @@ class Speaker(context: Context) {
 
         override fun onError(utteranceId: String?, errorCode: Int) = finished(utteranceId)
         override fun onStop(utteranceId: String?, interrupted: Boolean) = finished(utteranceId)
+    }
+
+    init {
+        synchronized(live) { live.add(this) }
+        tts = TextToSpeech(context.applicationContext) { status ->
+            ready = status == TextToSpeech.SUCCESS
+            if (ready) {
+                tts?.setOnUtteranceProgressListener(progressListener)
+                pending?.let { speakNow(it.text, it.locale, it.id) }
+            } else {
+                // No voice engine: nobody will ever call back, so release a waiting listener at once.
+                pending?.let { finished(it.id) }
+            }
+            pending = null
+        }
     }
 
     private fun finished(utteranceId: String?) {

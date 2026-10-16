@@ -17,7 +17,12 @@ class BootReceiver : BroadcastReceiver() {
         com.oyeai.control.Reminders.rescheduleAll(context)
         val settings = AppSettings(context)
         if (settings.runInBackground && settings.startOnBoot) {
-            AgentService.start(context)
+            try {
+                AgentService.start(context)
+            } catch (e: Exception) {
+                // Android can refuse a foreground service started from the background. The app shows it again when opened.
+                android.util.Log.w("OyeAI", "Background service not started after boot", e)
+            }
         }
         // Restart the "Oye" listener too, if the user had it on before the restart.
         val micOk = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==

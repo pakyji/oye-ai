@@ -184,4 +184,11 @@
     <string name="listen_status_error">رک گیا: %1$s (کوڈ %2$d)۔ دوبارہ کوشش جاری ہے۔</string>
     <string name="listen_unavailable">اوئے کی سماعت بند ہو گئی: مائیکروفون کی اجازت یا Google کی آواز کی سروس موجود نہیں۔</string>
     <string name="listen_resume">\"اوئے\" سننا دوبارہ شروع کرنے کے لیے ٹیپ کریں۔</string>
+    <string name="update_title">نیا ورژن دستیاب ہے</string>
+    <string name="update_text">OYE کا نیا ورژن تیار ہے (%s)۔ ابھی انسٹال کریں؟ Android آپ سے تصدیق مانگے گا۔</string>
+    <string name="update_install">انسٹال کریں</string>
+    <string name="update_downloading">ڈاؤن لوڈ ہو رہا ہے…</string>
+    <string name="update_later">بعد میں</string>
+    <string name="update_failed">ڈاؤن لوڈ ناکام۔ انٹرنیٹ چیک کریں اور دوبارہ کوشش کریں۔</string>
+    <string name="update_allow_sources">جو سیٹنگز کھلی ہیں اُن میں OYE سے انسٹالیشن کی اجازت دیں، پھر دوبارہ انسٹال دبائیں۔</string>
 </resources>

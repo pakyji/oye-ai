@@ -13,6 +13,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Only to open the installer for an update that OYE downloaded from its own GitHub releases. The user confirms each install. -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <!-- Brightness, volume and connection status. WRITE_SETTINGS is granted by the user in Settings, never by OYE. -->
     <!-- Granted by the user in Settings > Special app access, never by OYE. Lint cannot see that path. -->
@@ -96,7 +98,17 @@
             </intent-filter>
         </receiver>
 
-            <receiver
+            <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/update_paths" />
+        </provider>
+
+        <receiver
             android:name="com.oyeai.control.ReminderReceiver"
             android:exported="false" />
     </application>

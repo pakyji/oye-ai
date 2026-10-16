@@ -21,6 +21,7 @@ import com.oyeai.ui.ChatScreen
 import com.oyeai.ui.OyeTheme
 import com.oyeai.ui.SettingsScreen
 import com.oyeai.ui.SplashScreen
+import com.oyeai.update.UpdateGate
 
 /** Set while the app is on screen. Used to decide whether an app can be opened directly. */
 object AppVisibility {
@@ -85,6 +86,7 @@ private fun OyeRoot() {
         SplashScreen(onFinished = { splashDone = true })
         return
     }
+    UpdateGate()
     when (screen) {
         Screen.Chat -> ChatScreen(onOpenSettings = { screen = Screen.Settings })
         Screen.Settings -> SettingsScreen(

@@ -18,6 +18,12 @@ Phone commands are also understood in Hindi and Roman Urdu (Hinglish).
    If you already have OYE, installing over it keeps your settings.
 4. Open OYE, go to **Settings**, add at least one AI provider key, and choose it.
 
+**Updates:** OYE checks GitHub for a newer build about every six hours, when you open the app.
+If one is ready, it offers **Install**. The download is checked by Android against the installed
+app's signature, and Android asks you to confirm the install. Android does not allow apps to
+install updates silently. Updates work only if the new build is signed with the same key as the
+one already installed.
+
 ## AI providers
 
 Add keys for as many providers as you like. OYE uses the selected provider first and
