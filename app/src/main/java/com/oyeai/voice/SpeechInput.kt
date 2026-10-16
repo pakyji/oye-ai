@@ -8,12 +8,21 @@ import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import com.oyeai.R
 
-/** One-shot speech recognition. Call from the main thread. */
+/**
+ * Speech recognition for the chat screen. Call from the main thread.
+ * [onText] gets a sentence. [onSilence] means nothing usable was heard or a short, temporary error:
+ * the caller can simply listen again. [onFail] means a problem the user must fix (for example no microphone permission).
+ */
 class SpeechInput(private val context: Context) {
 
     private var recognizer: SpeechRecognizer? = null
 
-    fun listen(languageTag: String, onText: (String) -> Unit, onFail: (String) -> Unit) {
+    fun listen(
+        languageTag: String,
+        onText: (String) -> Unit,
+        onSilence: () -> Unit,
+        onFail: (String) -> Unit
+    ) {
         if (!SpeechRecognizer.isRecognitionAvailable(context)) {
             onFail(context.getString(R.string.no_speech))
             return
@@ -24,11 +33,15 @@ class SpeechInput(private val context: Context) {
         rec.setRecognitionListener(object : RecognitionListener {
             override fun onResults(results: Bundle?) {
                 val text = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)?.firstOrNull()
-                if (text.isNullOrBlank()) onFail(context.getString(R.string.heard_nothing)) else onText(text)
+                if (text.isNullOrBlank()) onSilence() else onText(text)
             }
 
             override fun onError(error: Int) {
-                onFail(context.getString(R.string.heard_nothing))
+                when (error) {
+                    SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS ->
+                        onFail(context.getString(R.string.mic_needed))
+                    else -> onSilence()
+                }
             }
 
             override fun onReadyForSpeech(params: Bundle?) {}
@@ -44,11 +57,17 @@ class SpeechInput(private val context: Context) {
             .putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
             .putExtra(RecognizerIntent.EXTRA_LANGUAGE, languageTag)
             .putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1)
+            .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_COMPLETE_SILENCE_LENGTH_MILLIS, 1500L)
+            .putExtra(RecognizerIntent.EXTRA_SPEECH_INPUT_POSSIBLY_COMPLETE_SILENCE_LENGTH_MILLIS, 1200L)
         rec.startListening(intent)
     }
 
-    fun destroy() {
+    /** Stops any recognition in progress. Nothing is delivered after this. */
+    fun stop() {
+        recognizer?.cancel()
         recognizer?.destroy()
         recognizer = null
     }
+
+    fun destroy() = stop()
 }

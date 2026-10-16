@@ -34,6 +34,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -42,6 +43,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.material3.LocalContentColor
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.core.content.ContextCompat
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -71,8 +78,33 @@ fun ChatScreen(onOpenSettings: () -> Unit, vm: ChatViewModel = viewModel()) {
         }
     }
 
+    val handsFree by vm.handsFree.collectAsState()
+    val context = LocalContext.current
     val micPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if (granted) vm.listen { heard -> vm.send(heard) } else vm.micDenied()
+        if (granted) vm.startHandsFree() else vm.micDenied()
+    }
+    // One tap starts hands-free listening; another tap stops it. No permission prompt once granted.
+    val onMic: () -> Unit = {
+        when {
+            handsFree -> vm.stopHandsFree()
+            ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
+                android.content.pm.PackageManager.PERMISSION_GRANTED -> vm.startHandsFree()
+            else -> micPermission.launch(Manifest.permission.RECORD_AUDIO)
+        }
+    }
+
+    // The mic is released when the screen is in the background, and resumed when it comes back.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_RESUME -> vm.setVisible(true)
+                Lifecycle.Event.ON_PAUSE -> vm.setVisible(false)
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
     Scaffold(
@@ -104,11 +136,12 @@ fun ChatScreen(onOpenSettings: () -> Unit, vm: ChatViewModel = viewModel()) {
                     placeholder = { Text(stringResource(R.string.chat_hint)) },
                     maxLines = 4
                 )
-                IconButton(
-                    onClick = { micPermission.launch(Manifest.permission.RECORD_AUDIO) },
-                    enabled = !busy
-                ) {
-                    Icon(Icons.Filled.Mic, contentDescription = stringResource(R.string.speak_button))
+                IconButton(onClick = onMic) {
+                    Icon(
+                        Icons.Filled.Mic,
+                        contentDescription = stringResource(R.string.speak_button),
+                        tint = if (handsFree) MaterialTheme.colorScheme.error else LocalContentColor.current
+                    )
                 }
                 IconButton(
                     onClick = {
@@ -131,7 +164,7 @@ fun ChatScreen(onOpenSettings: () -> Unit, vm: ChatViewModel = viewModel()) {
                 .padding(horizontal = 12.dp)
         ) {
             item {
-                SocialCard(onVoice = { micPermission.launch(Manifest.permission.RECORD_AUDIO) })
+                SocialCard(onVoice = onMic)
                 Spacer(Modifier.height(8.dp))
             }
             items(messages, key = { it.id }) { msg ->

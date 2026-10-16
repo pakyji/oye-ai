@@ -16,6 +16,7 @@ import com.oyeai.control.PhoneCommandRunner
 import com.oyeai.voice.SpeechInput
 import com.oyeai.voice.Speaker
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,6 +61,13 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     private val _notice = MutableStateFlow<String?>(null)
     val notice: StateFlow<String?> = _notice.asStateFlow()
 
+    /** Hands-free: the mic keeps listening after each answer, so the user never presses it again. */
+    private val _handsFree = MutableStateFlow(false)
+    val handsFree: StateFlow<Boolean> = _handsFree.asStateFlow()
+
+    /** False while the chat screen is in the background. Listening stops then. */
+    private var visible = true
+
     fun clearNotice() {
         _notice.value = null
     }
@@ -88,13 +96,13 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             result.onSuccess { reply ->
                 val items = reply.actions.map { ActionItem(it) }
                 val msgId = append(Role.Assistant, reply.text, items)
-                if (settings.speakReplies) {
-                    val lang = reply.lang ?: settings.language.takeIf { it != "auto" } ?: "en"
-                    speaker.speak(reply.text, localeFor(lang))
-                }
                 // Safe actions run right away. Risky ones wait for the user to tap Confirm.
                 reply.actions.forEachIndexed { index, action ->
                     if (!action.needsConfirmation) runAction(msgId, index)
+                }
+                if (settings.speakReplies) {
+                    val lang = reply.lang ?: settings.language.takeIf { it != "auto" } ?: "en"
+                    sayReply(reply.text, lang)
                 }
             }.onFailure { error ->
                 val message = if (error is NoKeyException) {
@@ -105,6 +113,28 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 append(Role.Assistant, message)
             }
             _busy.value = false
+            afterAnswer()
+        }
+    }
+
+    /**
+     * Speaks a reply. In hands-free mode it waits until the voice has finished, so the mic
+     * does not hear Oye's own voice.
+     */
+    private suspend fun sayReply(text: String, lang: String) {
+        if (_handsFree.value) {
+            speaker.speakAndWait(text, localeFor(lang), SPEAK_TIMEOUT_MS)
+        } else {
+            speaker.speak(text, localeFor(lang))
+        }
+    }
+
+    /** Hands-free: start listening again once the answer is done and any voice has faded. */
+    private fun afterAnswer() {
+        if (!_handsFree.value) return
+        viewModelScope.launch {
+            delay(ECHO_PAUSE_MS)
+            listenLoop()
         }
     }
 
@@ -115,8 +145,9 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             append(Role.Assistant, reply)
             if (settings.speakReplies) {
                 val lang = settings.language.takeIf { it != "auto" } ?: "en"
-                speaker.speak(reply, localeFor(lang))
+                sayReply(reply, lang)
             }
+            afterAnswer()
         }
     }
 
@@ -138,12 +169,54 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun listen(onText: (String) -> Unit) {
+    /** The mic button: turns hands-free listening on, or off if it is already on. */
+    fun toggleHandsFree() {
+        if (_handsFree.value) stopHandsFree() else startHandsFree()
+    }
+
+    fun startHandsFree() {
+        _handsFree.value = true
+        _notice.value = getApplication<Application>().getString(R.string.hands_free_on)
+        listenLoop()
+    }
+
+    fun stopHandsFree() {
+        _handsFree.value = false
+        speech.stop()
+    }
+
+    /** Called when the chat screen appears or leaves. The mic is released in the background. */
+    fun setVisible(isVisible: Boolean) {
+        visible = isVisible
+        if (!isVisible) {
+            speech.stop()
+        } else if (_handsFree.value) {
+            listenLoop()
+        }
+    }
+
+    private fun listenLoop() {
+        if (!_handsFree.value || !visible || _busy.value) return
         speech.listen(
             languageTag = speechTag(settings.language),
-            onText = { text -> viewModelScope.launch { onText(text) } },
-            onFail = { message -> _notice.value = message }
+            onText = { text ->
+                viewModelScope.launch {
+                    if (_handsFree.value) send(text)
+                }
+            },
+            onSilence = { retryLater() },
+            onFail = { message ->
+                _notice.value = message
+                stopHandsFree()
+            }
         )
+    }
+
+    private fun retryLater() {
+        viewModelScope.launch {
+            delay(RETRY_MS)
+            listenLoop()
+        }
     }
 
     private fun append(role: Role, text: String, actions: List<ActionItem> = emptyList()): Long {
@@ -162,12 +235,17 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     override fun onCleared() {
+        _handsFree.value = false
         speaker.shutdown()
         speech.destroy()
         super.onCleared()
     }
 
     companion object {
+        private const val SPEAK_TIMEOUT_MS = 30_000L
+        private const val ECHO_PAUSE_MS = 400L
+        private const val RETRY_MS = 800L
+
         fun localeFor(lang: String): Locale = when (lang) {
             "it" -> Locale.ITALY
             "ur" -> Locale("ur", "PK")

@@ -191,4 +191,5 @@
     <string name="update_later">Più tardi</string>
     <string name="update_failed">Download non riuscito. Controlla la connessione e riprova.</string>
     <string name="update_allow_sources">Consenti le installazioni da OYE nelle impostazioni appena aperte, poi tocca di nuovo Installa.</string>
+    <string name="hands_free_on">Ascolto continuo attivo. Parla pure. Tocca il microfono per fermarlo.</string>
 </resources>

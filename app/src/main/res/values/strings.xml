@@ -191,4 +191,5 @@
     <string name="update_later">Later</string>
     <string name="update_failed">Download failed. Check the internet and try again.</string>
     <string name="update_allow_sources">Allow installs from OYE in the settings that just opened, then tap Install again.</string>
+    <string name="hands_free_on">Hands-free on. Just speak. Tap the mic to stop.</string>
 </resources>
