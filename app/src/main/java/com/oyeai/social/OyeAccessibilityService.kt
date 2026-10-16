@@ -28,7 +28,10 @@ class OyeAccessibilityService : AccessibilityService() {
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
-        // Events are not used. The service looks at the window only when a scroll is requested.
+        // Only remembers which supported app was last on screen, so OYE can reopen it for a scroll.
+        // No text or content is read from the event.
+        val pkg = event?.packageName?.toString() ?: return
+        if (pkg in SUPPORTED_PACKAGES) lastSupported = pkg
     }
 
     override fun onInterrupt() {
