@@ -8,6 +8,7 @@ import com.oyeai.AppVisibility
 import com.oyeai.R
 import com.oyeai.ai.Action
 import com.oyeai.voice.ActionNotifier
+import kotlinx.coroutines.delay
 
 /**
  * Carries out a social command and returns the sentence OYE will say or show.
@@ -33,8 +34,14 @@ object SocialActions {
         } else {
             context.getString(R.string.social_not_running)
         }
-        SocialCommand.Next -> scrollOnce(context, Direction.Forward, R.string.social_next_done)
-        SocialCommand.Previous -> scrollOnce(context, Direction.Backward, R.string.social_prev_done)
+        SocialCommand.Next -> {
+            bringSocialAppForward(context)
+            scrollOnce(context, Direction.Forward, R.string.social_next_done)
+        }
+        SocialCommand.Previous -> {
+            bringSocialAppForward(context)
+            scrollOnce(context, Direction.Backward, R.string.social_prev_done)
+        }
         SocialCommand.Slower -> changeSpeed(context, SessionEngine.SPEED_STEP_MS)
         SocialCommand.Faster -> changeSpeed(context, -SessionEngine.SPEED_STEP_MS)
     }
@@ -69,6 +76,7 @@ object SocialActions {
     }
 
     private suspend fun start(context: Context): String {
+        if (SocialControl.isConnected()) bringSocialAppForward(context)
         val settings = AppSettings(context)
         return when (SocialControl.start(context)) {
             StartResult.Started -> context.getString(
@@ -82,6 +90,25 @@ object SocialActions {
         }
     }
 
+    /**
+     * Scrolling only works on the app that is on screen. When OYE itself is in front (the user is in
+     * the chat), reopen the social app that was used last and give it a moment to come forward.
+     * In the background Android does not allow this, so the scroll reports what happened instead.
+     */
+    private suspend fun bringSocialAppForward(context: Context) {
+        val active = OyeAccessibilityService.activePackage()
+        if (active != null && active in OyeAccessibilityService.SUPPORTED_PACKAGES) return
+        if (!AppVisibility.resumed) return
+        val target = OyeAccessibilityService.lastSupportedPackage() ?: return
+        val launch = context.packageManager.getLaunchIntentForPackage(target) ?: return
+        try {
+            context.startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            delay(OPEN_WAIT_MS)
+        } catch (e: ActivityNotFoundException) {
+            // The app cannot be opened; the scroll itself will report that.
+        }
+    }
+
     private suspend fun scrollOnce(context: Context, direction: Direction, doneRes: Int): String =
         when (SocialControl.scrollOnce(direction)) {
             is ScrollResult.Done -> context.getString(doneRes)
@@ -90,6 +117,8 @@ object SocialActions {
             ScrollResult.UnsupportedApp -> context.getString(R.string.social_unsupported)
             ScrollResult.Failed -> context.getString(R.string.social_failed)
         }
+
+    private const val OPEN_WAIT_MS = 1_500L
 
     private fun changeSpeed(context: Context, delta: Long): String {
         SocialControl.setSpeed(context, SocialControl.intervalMs() + delta)

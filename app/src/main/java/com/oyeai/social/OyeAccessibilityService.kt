@@ -55,12 +55,14 @@ class OyeAccessibilityService : AccessibilityService() {
             onResult(ScrollResult.NoActiveWindow)
             return
         }
-        val supported = isSupportedPackage(root.packageName?.toString())
+        val pkg = root.packageName?.toString()
+        val supported = isSupportedPackage(pkg)
         if (!supported) {
             root.recycleCompat()
             onResult(ScrollResult.UnsupportedApp)
             return
         }
+        if (pkg != null && pkg in SUPPORTED_PACKAGES) lastSupported = pkg
 
         val action = if (direction == Direction.Forward) {
             AccessibilityNodeInfo.ACTION_SCROLL_FORWARD
@@ -96,6 +98,14 @@ class OyeAccessibilityService : AccessibilityService() {
         return null
     }
 
+    /** Package of the window on screen right now, or null when unknown. */
+    fun activePackage(): String? {
+        val root = rootInActiveWindow ?: return null
+        val pkg = root.packageName?.toString()
+        root.recycleCompat()
+        return pkg
+    }
+
     /** Performs a global action such as back or home. Returns what Android reported. */
     fun performGlobal(action: Int): Boolean = performGlobalAction(action)
 
@@ -105,11 +115,13 @@ class OyeAccessibilityService : AccessibilityService() {
      */
     fun findLabel(label: String, click: Boolean): LabelResult {
         val root = rootInActiveWindow ?: return LabelResult.NoWindow
-        val supported = isSupportedPackage(root.packageName?.toString())
+        val pkg = root.packageName?.toString()
+        val supported = isSupportedPackage(pkg)
         if (!supported) {
             root.recycleCompat()
             return LabelResult.Unsupported
         }
+        if (pkg != null && pkg in SUPPORTED_PACKAGES) lastSupported = pkg
         val wanted = label.lowercase(Locale.ROOT)
         val match = findNode(root, wanted, 0)
         // When the root itself matched, it is recycled once below, as [match].
@@ -221,6 +233,15 @@ class OyeAccessibilityService : AccessibilityService() {
 
         @Volatile
         private var instance: OyeAccessibilityService? = null
+
+        /** The last supported app that was on screen, so OYE can bring it back for a scroll. */
+        @Volatile
+        private var lastSupported: String? = null
+
+        fun lastSupportedPackage(): String? = lastSupported
+
+        /** Package of the window on screen, or null when the service is off. */
+        fun activePackage(): String? = instance?.activePackage()
 
         /** The connected service, or null when the user has not turned it on. */
         fun current(): OyeAccessibilityService? = instance
