@@ -23,10 +23,16 @@ class BootReceiver : BroadcastReceiver() {
         val micOk = ContextCompat.checkSelfPermission(context, Manifest.permission.RECORD_AUDIO) ==
             PackageManager.PERMISSION_GRANTED
         if (settings.listenForOye && micOk) {
-            try {
-                ListenService.start(context)
-            } catch (e: Exception) {
-                // Android can refuse a microphone service started from the background. The user can turn it on again in the app.
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.R) {
+                // Android 11+ does not give a microphone service started from the background any microphone.
+                // Ask the user to tap once instead of starting a listener that cannot hear.
+                ListenService.offerResume(context)
+            } else {
+                try {
+                    ListenService.start(context)
+                } catch (e: Exception) {
+                    ListenService.offerResume(context)
+                }
             }
         }
     }

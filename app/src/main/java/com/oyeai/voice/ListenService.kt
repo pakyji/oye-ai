@@ -28,6 +28,8 @@ import com.oyeai.control.PhoneCommandParser
 import com.oyeai.control.PhoneCommandRunner
 import com.oyeai.ui.ChatViewModel
 import com.oyeai.voice.WakeWord.Match
+import android.widget.Toast
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -74,14 +76,16 @@ class ListenService : Service() {
         }
         try {
             startForegroundCompat()
-        } catch (e: SecurityException) {
-            // Android refused a microphone service from the background (after a restart or a kill).
+        } catch (e: Exception) {
+            // Android refused a microphone service from the background (after a restart or a kill):
+            // SecurityException, or ForegroundServiceStartNotAllowedException on Android 12 and later.
             // Keep the user's ON setting, so the listener starts again when the app is opened.
             stopSelf()
             return START_NOT_STICKY
         }
         if (!hasMicPermission() || !SpeechRecognizer.isRecognitionAvailable(this)) {
             settings.listenForOye = false
+            Toast.makeText(this, R.string.listen_unavailable, Toast.LENGTH_LONG).show()
             stopSelf()
             return START_NOT_STICKY
         }
@@ -170,10 +174,11 @@ class ListenService : Service() {
 
         override fun onError(error: Int) {
             lastError = error
-            updateStatus("Oye ruka: ${errorName(error)} (code $error), dobara try kar raha hoon")
+            updateStatus(getString(R.string.listen_status_error, errorName(error), error))
             when (error) {
                 SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> {
                     settings.listenForOye = false
+                    Toast.makeText(this@ListenService, R.string.listen_unavailable, Toast.LENGTH_LONG).show()
                     stopSelf()
                 }
                 // The recognizer is still busy with an earlier request: give it more time.
@@ -184,7 +189,7 @@ class ListenService : Service() {
         }
 
         override fun onReadyForSpeech(params: Bundle?) {
-            updateStatus("Sun raha hoon. \"Oye\" bolein")
+            updateStatus(getString(R.string.listen_status_ready))
         }
         override fun onBeginningOfSpeech() {}
         override fun onRmsChanged(rmsdB: Float) {}
@@ -200,10 +205,10 @@ class ListenService : Service() {
         SpeechRecognizer.ERROR_AUDIO -> "mic/audio"
         SpeechRecognizer.ERROR_SERVER -> "speech server"
         SpeechRecognizer.ERROR_CLIENT -> "client"
-        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "koi awaaz nahi"
-        SpeechRecognizer.ERROR_NO_MATCH -> "samajh nahi aaya"
+        SpeechRecognizer.ERROR_SPEECH_TIMEOUT -> "no speech"
+        SpeechRecognizer.ERROR_NO_MATCH -> "not understood"
         SpeechRecognizer.ERROR_RECOGNIZER_BUSY -> "recognizer busy"
-        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "mic permission nahi"
+        SpeechRecognizer.ERROR_INSUFFICIENT_PERMISSIONS -> "no microphone permission"
         else -> "unknown"
     }
 
@@ -228,12 +233,20 @@ class ListenService : Service() {
         busy = true
         recognizer?.cancel()
         scope.launch {
-            val phone = PhoneCommandParser.parse(text)
-            if (phone != null) {
-                speakThenListen(PhoneCommandRunner.run(this@ListenService, phone), null, followUp = false)
-            } else {
-                val reply: Reply = assistant.handle(text)
-                speakThenListen(reply.text, reply.lang, followUp = false)
+            try {
+                val phone = PhoneCommandParser.parse(text)
+                if (phone != null) {
+                    speakThenListen(PhoneCommandRunner.run(this@ListenService, phone), null, followUp = false)
+                } else {
+                    val reply: Reply = assistant.handle(text)
+                    speakThenListen(reply.text, reply.lang, followUp = false)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // A failed command must not leave the listener stuck in "busy", or it never hears Oye again.
+                busy = false
+                restartSoon(RETRY_MS)
             }
         }
     }
@@ -241,20 +254,31 @@ class ListenService : Service() {
     private fun say(text: String, followUp: Boolean = false) {
         busy = true
         recognizer?.cancel()
-        scope.launch { speakThenListen(text, null, followUp) }
+        scope.launch {
+            try {
+                speakThenListen(text, null, followUp)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                busy = false
+                restartSoon(RETRY_MS)
+            }
+        }
     }
 
     /** Speaks [text], then listens again. After a bare "Oye", the next sentence counts as the command. */
     private suspend fun speakThenListen(text: String, lang: String?, followUp: Boolean) {
-        if (text.isNotBlank()) {
-            val language = lang ?: settings.language.takeIf { it != "auto" } ?: Locale.getDefault().language
-            speaker?.speak(text, ChatViewModel.localeFor(language))
+        try {
+            if (text.isNotBlank()) {
+                val language = lang ?: settings.language.takeIf { it != "auto" } ?: Locale.getDefault().language
+                // Returns when the voice has really finished, so Oye does not hear itself or stay deaf too long.
+                speaker?.speakAndWait(text, ChatViewModel.localeFor(language), MAX_SPEAK_MS)
+            }
+        } finally {
+            awaitingCommandUntil = if (followUp) System.currentTimeMillis() + FOLLOW_UP_MS else 0L
+            busy = false
+            restartSoon(SHORT_MS)
         }
-        // Give the voice time to finish before listening again.
-        delay((text.length * MS_PER_CHAR).coerceIn(MIN_SPEAK_MS, MAX_SPEAK_MS))
-        awaitingCommandUntil = if (followUp) System.currentTimeMillis() + FOLLOW_UP_MS else 0L
-        busy = false
-        restartSoon(SHORT_MS)
     }
 
     private fun acknowledgement(): String {
@@ -285,6 +309,7 @@ class ListenService : Service() {
     companion object {
         private const val CHANNEL_ID = "oyeai_listening"
         private const val NOTIFICATION_ID = 1002
+        private const val RESUME_NOTIFICATION_ID = 1004
         private const val ACTION_STOP = "com.oyeai.voice.STOP_LISTENING"
         private const val FOLLOW_UP_MS = 8_000L
         private const val RETRY_MS = 1_500L
@@ -293,9 +318,7 @@ class ListenService : Service() {
         /** Last status line, shown in the notification. Kept in memory only. */
         @Volatile var status: String = ""
         private const val SHORT_MS = 300L
-        private const val MS_PER_CHAR = 80L
-        private const val MIN_SPEAK_MS = 1_500L
-        private const val MAX_SPEAK_MS = 15_000L
+        private const val MAX_SPEAK_MS = 30_000L
 
         fun start(context: Context) {
             ContextCompat.startForegroundService(context, Intent(context, ListenService::class.java))
@@ -303,6 +326,37 @@ class ListenService : Service() {
 
         fun stop(context: Context) {
             context.stopService(Intent(context, ListenService::class.java))
+        }
+
+        /**
+         * Android does not let a microphone service start from the background (for example after a restart).
+         * This shows a notification instead: one tap opens OYE, which then starts listening again.
+         */
+        fun offerResume(context: Context) {
+            if (Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+            ) return
+            val manager = context.getSystemService(NotificationManager::class.java)
+            manager.createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, context.getString(R.string.listen_channel), NotificationManager.IMPORTANCE_LOW)
+            )
+            val open = PendingIntent.getActivity(
+                context, 0, Intent(context, MainActivity::class.java),
+                PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            val notification = NotificationCompat.Builder(context, CHANNEL_ID)
+                .setSmallIcon(android.R.drawable.ic_btn_speak_now)
+                .setContentTitle(context.getString(R.string.app_name))
+                .setContentText(context.getString(R.string.listen_resume))
+                .setContentIntent(open)
+                .setAutoCancel(true)
+                .build()
+            try {
+                manager.notify(RESUME_NOTIFICATION_ID, notification)
+            } catch (e: SecurityException) {
+                // Notifications were revoked. The listener starts when the app is opened.
+            }
         }
     }
 }

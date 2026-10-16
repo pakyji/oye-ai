@@ -69,7 +69,8 @@ class OyeAccessibilityService : AccessibilityService() {
         }
         val target = findScrollable(root, action)
         val performed = target?.performAction(action) == true
-        target?.recycleCompat()
+        // The root itself can be the scrollable view. Recycling it twice throws on Android 8 to 12.
+        if (target != null && target !== root) target.recycleCompat()
         root.recycleCompat()
 
         if (performed) {
@@ -111,7 +112,8 @@ class OyeAccessibilityService : AccessibilityService() {
         }
         val wanted = label.lowercase(Locale.ROOT)
         val match = findNode(root, wanted, 0)
-        root.recycleCompat()
+        // When the root itself matched, it is recycled once below, as [match].
+        if (match !== root) root.recycleCompat()
         if (match == null) return LabelResult.NotFound
         if (!click) {
             match.recycleCompat()

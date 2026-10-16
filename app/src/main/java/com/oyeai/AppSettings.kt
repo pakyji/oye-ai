@@ -20,13 +20,10 @@ class AppSettings(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences("oyeai_prefs", Context.MODE_PRIVATE)
 
-    private val secure: SharedPreferences = EncryptedSharedPreferences.create(
-        context,
-        "oyeai_secure",
-        MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(),
-        EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-        EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-    )
+    // Created once per process and only when a key or token is first needed, so building
+    // AppSettings (which happens often, sometimes on the main thread) stays cheap.
+    private val appContext: Context = context.applicationContext
+    private val secure: SharedPreferences get() = secureStore(appContext)
 
     var language: String
         get() = prefs.getString("language", "auto") ?: "auto"
@@ -94,12 +91,14 @@ class AppSettings(context: Context) {
     }
 
     /** Providers added by the user. Only the URL and model are stored here; keys stay encrypted. */
-    fun customProviders(): List<ProviderSpec> {
+    fun customProviders(): List<ProviderSpec> = try {
         val array = JSONArray(prefs.getString("custom_providers", "[]") ?: "[]")
-        return (0 until array.length()).map { i ->
+        (0 until array.length()).map { i ->
             val o = array.getJSONObject(i)
             ProviderSpec(o.getString("id"), o.getString("name"), o.getString("baseUrl"), o.getString("model"), "")
         }
+    } catch (e: org.json.JSONException) {
+        emptyList()
     }
 
     fun addCustomProvider(name: String, baseUrl: String, model: String, apiKey: String): ProviderSpec {
@@ -137,5 +136,33 @@ class AppSettings(context: Context) {
         val withKey = allProviders().filter { key(it.id).isNotBlank() }
         val selected = withKey.firstOrNull { it.id == selectedProvider }
         return if (selected == null) withKey else listOf(selected) + withKey.filter { it.id != selectedProvider }
+    }
+
+    companion object {
+        private const val SECURE_FILE = "oyeai_secure"
+        private val lock = Any()
+        @Volatile private var shared: SharedPreferences? = null
+
+        private fun secureStore(context: Context): SharedPreferences =
+            shared ?: synchronized(lock) {
+                shared ?: openSecure(context).also { shared = it }
+            }
+
+        private fun openSecure(context: Context): SharedPreferences = try {
+            createSecure(context)
+        } catch (e: Exception) {
+            // A damaged Android Keystore entry would make the app crash on every start.
+            // The saved keys cannot be read any more, so start with an empty store instead.
+            context.deleteSharedPreferences(SECURE_FILE)
+            createSecure(context)
+        }
+
+        private fun createSecure(context: Context): SharedPreferences = EncryptedSharedPreferences.create(
+            context,
+            SECURE_FILE,
+            MasterKey.Builder(context).setKeyScheme(MasterKey.KeyScheme.AES256_GCM).build(),
+            EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
+            EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
+        )
     }
 }

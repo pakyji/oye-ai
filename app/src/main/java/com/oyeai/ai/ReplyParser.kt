@@ -13,7 +13,8 @@ sealed class Action {
     }
 
     data class OpenUrl(val url: String) : Action() {
-        override val needsConfirmation = false
+        // A link chosen by the model is never opened without the user's tap.
+        override val needsConfirmation = true
     }
 
     data class CloseApp(val app: String) : Action() {
@@ -52,7 +53,8 @@ object ReplyParser {
 
         return try {
             val obj = JSONObject(raw.substring(start, end + 1))
-            val text = obj.optString("reply").trim()
+            // optString turns a JSON null into the text "null", so check for it first.
+            val text = if (obj.isNull("reply")) "" else obj.optString("reply").trim()
             if (text.isEmpty()) return plain
             val lang = obj.optString("lang").trim().lowercase().takeIf { it in languages }
             val list: JSONArray = obj.optJSONArray("actions") ?: JSONArray()

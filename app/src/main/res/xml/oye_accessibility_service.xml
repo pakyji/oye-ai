@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Only window-state events are requested, and only Instagram and Facebook are named. -->
+<!-- Only window-state events are requested, and only these apps are named: Instagram, Facebook and YouTube.
+     Castle has no fixed package name, so it can only work if Android lets the service read it. -->
 <accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
     android:accessibilityEventTypes="typeWindowStateChanged"
-    android:packageNames="com.instagram.android,com.facebook.katana"
+    android:packageNames="com.instagram.android,com.facebook.katana,com.google.android.youtube"
     android:accessibilityFeedbackType="feedbackGeneric"
     android:accessibilityFlags="flagDefault"
     android:canRetrieveWindowContent="true"

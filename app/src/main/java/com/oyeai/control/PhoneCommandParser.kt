@@ -32,11 +32,12 @@ object PhoneCommandParser {
 
         if (isStopAll(t)) return PhoneCommand.StopAll
 
+        // Media comes before social, so "stop music" or "pause music" is not read as a scrolling command.
+        mediaCommand(t)?.let { return it }
+
         SocialCommands.parse(text)?.let { social: SocialCommand ->
             return if (social == SocialCommand.Stop) PhoneCommand.StopAll else PhoneCommand.Social(social)
         }
-
-        mediaCommand(t)?.let { return it }
 
         val number = t.firstOrNull { tok -> tok.all { it.isDigit() } }?.toIntOrNull()
         val stepUp = has(t, UP_STEP)
@@ -53,7 +54,11 @@ object PhoneCommandParser {
             if (has(t, OPEN)) return PhoneCommand.VolumePanel
         }
         if (has(t, TIMER) && number != null) return PhoneCommand.Timer(number.coerceIn(1, 600))
-        if (has(t, CALL)) return PhoneCommand.Dial(nameTokens(t).joinToString(" "))
+        if (has(t, CALL)) {
+            val who = nameTokens(t)
+            // A long sentence that happens to contain "call" is a question, not a dial command.
+            if (who.size <= MAX_NAME_WORDS) return PhoneCommand.Dial(who.joinToString(" "))
+        }
         if (has(t, DOWNLOAD)) return PhoneCommand.OpenDownloads
 
         val target = settingsTarget(t, norm)
@@ -63,11 +68,12 @@ object PhoneCommandParser {
         if (has(t, BACK)) return PhoneCommand.Back
         if (has(t, HOME)) return PhoneCommand.Home
 
+        // App, button and label names are short. A longer sentence goes to the assistant instead.
         if (has(t, CLICK)) {
-            nameTokens(t).joinToString(" ").takeIf { it.isNotEmpty() }?.let { return PhoneCommand.ClickLabel(it) }
+            shortName(t)?.let { return PhoneCommand.ClickLabel(it) }
         }
         if (has(t, FIND)) {
-            nameTokens(t).joinToString(" ").takeIf { it.isNotEmpty() }?.let { return PhoneCommand.FindLabel(it) }
+            shortName(t)?.let { return PhoneCommand.FindLabel(it) }
         }
         if (has(t, SCROLL)) {
             // "scroll karo" with no direction means down, the usual way to read a feed.
@@ -75,7 +81,7 @@ object PhoneCommandParser {
             return PhoneCommand.ScrollScreen(up)
         }
         if (has(t, OPEN)) {
-            nameTokens(t).joinToString(" ").takeIf { it.isNotEmpty() }?.let { return PhoneCommand.OpenApp(it) }
+            shortName(t)?.let { return PhoneCommand.OpenApp(it) }
         }
 
         val core = t.filter { it !in FILLER }
@@ -91,8 +97,20 @@ object PhoneCommandParser {
             .split(' ')
             .filter { it.isNotEmpty() }
 
+    /** A word list entry ending in "$" must match the whole word ("home$" is not "homework"). Others match by prefix. */
+    private fun matches(token: String, entry: String): Boolean =
+        if (entry.endsWith("$")) token == entry.dropLast(1) else token.startsWith(entry)
+
     private fun has(t: List<String>, prefixes: List<String>): Boolean =
-        t.any { tok -> prefixes.any { tok.startsWith(it) } }
+        t.any { tok -> prefixes.any { matches(tok, it) } }
+
+    /** The app or label name, or null when it is empty or too long to be a name. */
+    private fun shortName(t: List<String>): String? {
+        val words = nameTokens(t)
+        return if (words.isEmpty() || words.size > MAX_NAME_WORDS) null else words.joinToString(" ")
+    }
+
+    private const val MAX_NAME_WORDS = 3
 
     private fun isStopAll(t: List<String>): Boolean {
         // "cancel the timer" is not a stop-all request, so bare cancel only counts when short.
@@ -120,14 +138,14 @@ object PhoneCommandParser {
     /** Words that are not the name of an app or contact: filler and verbs. */
     private fun nameTokens(t: List<String>): List<String> = t.filter { tok ->
         tok !in FILLER && !tok.all { it.isDigit() } &&
-            (VERB_PREFIXES + MESSAGE).none { tok.startsWith(it) }
+            (VERB_PREFIXES + MESSAGE).none { matches(tok, it) }
     }
 
-    private val OPEN = listOf("khol", "open", "apr", "dikha", "mostra", "کھول", "دکھا", "खोल", "दिखा")
+    private val OPEN = listOf("khol", "open$", "apri$", "apro$", "aprire$", "aprimi$", "dikha", "mostra", "کھول", "دکھا", "खोल", "दिखा")
     private val GO = listOf("jao", "jaao", "jaiye", "vai", "جاؤ", "جائیں", "जाओ", "जाइए")
-    private val CLICK = listOf("click", "tap", "dabao", "dabaa", "dabaiye", "press", "premi", "दबा", "دبا", "کلک", "क्लिक")
-    private val FIND = listOf("dhoond", "dhund", "find", "cerca", "trova", "تلاش", "ڈھونڈ", "खोज")
-    private val CALL = listOf("call", "chiam", "कॉल", "کال")
+    private val CLICK = listOf("click", "tap$", "dabao", "dabaa", "dabaiye", "press$", "premi", "दबा", "دبا", "کلک", "क्लिक")
+    private val FIND = listOf("dhoond", "dhund", "find$", "cerca", "trova", "تلاش", "ڈھونڈ", "खोज")
+    private val CALL = listOf("call$", "chiam", "कॉल", "کال")
     private val WRITE = listOf("likh", "scriv", "लिख", "لکھ")
     private val MESSAGE = listOf("message", "messag", "msg", "sms", "scriv", "likh", "संदेश", "मैसेज", "پیغام", "میسج")
     private val VERB_PREFIXES = OPEN + GO + CLICK + FIND + CALL + WRITE
@@ -141,16 +159,16 @@ object PhoneCommandParser {
     private val SCROLL = listOf("scroll", "scorr", "स्क्रॉल", "اسکرول")
     private val MEDIA = listOf("music", "song", "gaan", "گان", "गान", "موسیقی", "media", "मीडिया", "میڈیا", "playback")
     private val PLAY = listOf("play", "chala", "chalu", "riproduc", "बजा", "چلا", "चला", "بجا")
-    private val PAUSE = listOf("pause", "pausa", "ruk", "rok", "रोक", "रुक", "روک")
+    private val PAUSE = listOf("pause", "pausa", "stop$", "ferm", "band$", "ruk", "rok", "रोक", "रुक", "روک", "बंद", "بند")
     private val NEXT = listOf("agl", "next", "avanti", "successiv", "اگل", "अगल")
     private val PREV = listOf("pichl", "previous", "precedent", "پچھل", "पिछल")
     private val TIMER = listOf("timer", "टाइमर", "ٹائمر", "tajmer")
     private val DOWNLOAD = listOf("download", "डाउनलोड", "ڈاؤن", "scaric")
     private val SETTINGS = listOf("setting", "impostazion", "सेटिंग", "سیٹنگ", "ترتیبات")
     private val NOTIFICATION = listOf("notif", "सूचना", "اطلاع")
-    private val BATTERY = listOf("battery", "batter", "batteria", "बैटरी", "بیٹری")
-    private val BACK = listOf("back", "wapas", "wapis", "indietro", "वापस", "واپس", "peeche", "पीछे", "پیچھے")
-    private val HOME = listOf("home", "ghar", "घर", "گھر")
+    private val BATTERY = listOf("battery$", "batteria$", "बैटरी", "بیٹری")
+    private val BACK = listOf("back$", "wapas", "wapis", "indietro", "वापस", "واپس", "peeche", "पीछे", "پیچھے")
+    private val HOME = listOf("home$", "ghar", "घर", "گھر")
     private val CANCEL = listOf("cancel", "annull", "रद्द", "منسوخ")
     private val EVERYTHING = listOf("everything", "saar", "sab", "tutto", "سب", "सब")
     private val AUTOMATION = listOf("automation", "automazion", "स्वचालन", "خودکار")

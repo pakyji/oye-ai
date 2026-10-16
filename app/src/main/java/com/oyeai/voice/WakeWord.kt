@@ -14,7 +14,10 @@ object WakeWord {
     }
 
     // Spellings that speech recognizers commonly produce for "Oye" in Italian, English and Urdu.
-    private val wakeWords = listOf("oye", "oyé", "oyè", "oi", "oy", "اوئے", "اوے", "اوئی")
+    private val wakeWords = listOf(
+        "oye", "oyé", "oyè", "oi", "oy", "oyee", "ooye", "oiye", "hoye", "oie", "ohye", "oyi",
+        "اوئے", "اوے", "اوئی"
+    )
 
     /** Returns null when the sentence does not start with the wake word. */
     fun parse(transcript: String): Match? {

@@ -71,6 +71,7 @@ class ReplyParserTest {
         assertTrue(Action.CallContact("Mario").needsConfirmation)
         assertTrue(Action.SendWhatsApp("Mario", "ciao").needsConfirmation)
         assertTrue(Action.CloseApp("YouTube").needsConfirmation)
+        assertTrue(Action.OpenUrl("https://x.com").needsConfirmation)
         assertFalse(Action.OpenApp("YouTube").needsConfirmation)
     }
 }

@@ -208,7 +208,12 @@ object PhoneCommandRunner {
     private fun remind(context: Context, minutes: Int, text: String): String {
         val at = Reminders.add(context, minutes, text)
         val time = java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(at))
-        return context.getString(R.string.reminder_set, minutes, time)
+        val reply = context.getString(R.string.reminder_set, minutes, time)
+        // On Android 13+ the reminder cannot be shown without the notification permission.
+        val notificationsOff = android.os.Build.VERSION.SDK_INT >= 33 &&
+            context.checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) !=
+            android.content.pm.PackageManager.PERMISSION_GRANTED
+        return if (notificationsOff) "$reply ${context.getString(R.string.reminder_no_notifications)}" else reply
     }
 
     private fun timer(context: Context, minutes: Int): String {

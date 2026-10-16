@@ -3,14 +3,16 @@
 > Developed by Professor
 
 A personal AI assistant for Android. It listens for "Oye" or reads what you type, answers in
-**Italian, English, Urdu and Hindi**, and can act on your phone: open apps, set reminders and timers,
+**Italian, English and Urdu**, and can act on your phone: open apps, set reminders and timers,
 scroll apps on request, prepare WhatsApp messages, and open links. It can keep listening in the background.
 
 **Current version: 0.2.0 (test build).** Not yet tested on every phone. See the Limits section.
 
+Phone commands are also understood in Hindi and Roman Urdu (Hinglish).
+
 ## Install
 
-1. Open the **Releases** page of this repository on your phone.
+1. Open the **Releases** page of this repository on your phone. Every change to `main` publishes a new signed build there automatically.
 2. Download `app-release.apk` from the latest release (for example `v0.2.0`).
 3. Allow installing from this source when Android asks, then install.
    If you already have OYE, installing over it keeps your settings.
@@ -34,7 +36,7 @@ sentences that start with "Oye". Its status is shown in the notification, for ex
 "Listening" or the reason it stopped.
 
 For best results, set OYE to **Unrestricted** in your phone's battery settings, and keep the
-notification visible. If you turned it on before a restart, OYE starts listening again when you open the app.
+notification visible. After a restart, Android does not let a microphone service start by itself, so OYE shows a notification: tap it once and listening starts again.
 
 ## What it can do
 

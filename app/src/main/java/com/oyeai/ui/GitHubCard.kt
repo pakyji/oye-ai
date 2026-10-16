@@ -66,7 +66,7 @@ fun GitHubCard(settings: AppSettings) {
             )
             Button(enabled = !busy, onClick = {
                 status = when {
-                    settings.githubToken.isBlank() || settings.githubRepo.isBlank() -> "Save the token and repo first."
+                    token.isBlank() || repo.isBlank() -> "Enter the token and repo first."
                     path.isBlank() -> "Enter a file path."
                     else -> { confirm = true; "" }
                 }
@@ -80,19 +80,24 @@ fun GitHubCard(settings: AppSettings) {
             onDismissRequest = { confirm = false },
             title = { Text("Push this file?") },
             text = {
-                Text("This creates one commit on ${settings.githubRepo} (${settings.githubBranch}) at $path.")
+                Text("This creates one commit on ${repo.trim()} (${branch.trim().ifBlank { "main" }}) at ${path.trim()}.")
             },
             confirmButton = {
                 TextButton(onClick = {
                     confirm = false
                     busy = true
                     status = "Pushing..."
-                    val commitMessage = message.ifBlank { "Update $path from OYE" }
+                    // Save what is in the fields first, so the push never uses older saved values.
+                    settings.githubToken = token
+                    settings.githubRepo = repo
+                    settings.githubBranch = branch
+                    val cleanPath = path.trim()
+                    val commitMessage = message.ifBlank { "Update $cleanPath from OYE" }
                     scope.launch {
                         val result = withContext(Dispatchers.IO) {
                             GitHub.pushFile(
                                 settings.githubToken, settings.githubRepo, settings.githubBranch,
-                                path, content, commitMessage
+                                cleanPath, content, commitMessage
                             )
                         }
                         status = result.message

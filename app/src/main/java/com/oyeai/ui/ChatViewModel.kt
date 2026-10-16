@@ -120,8 +120,13 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Actions already started, so a double tap on Confirm cannot call or message twice. */
+    private val started = mutableSetOf<Pair<Long, Int>>()
+
     fun runAction(messageId: Long, index: Int) {
         val item = _messages.value.firstOrNull { it.id == messageId }?.actions?.getOrNull(index) ?: return
+        if (item.state != ActionState.Pending) return
+        if (!synchronized(started) { started.add(messageId to index) }) return
         viewModelScope.launch(Dispatchers.IO) {
             val outcome: Outcome = executor.execute(item.action)
             updateItem(messageId, index) {

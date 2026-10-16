@@ -22,7 +22,10 @@ android {
         applicationId 'com.oyeai'
         minSdk 26
         targetSdk 34
-        versionCode 2
+        // CI builds number themselves with the run number, so every build is newer than the last one
+        // and Android installs it as an update. Local builds keep versionCode 2.
+        def ciRun = System.getenv('GITHUB_RUN_NUMBER')
+        versionCode ciRun ? 1000 + ciRun.toInteger() : 2
         versionName '0.2.0'
     }
 

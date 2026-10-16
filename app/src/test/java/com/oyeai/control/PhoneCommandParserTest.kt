@@ -166,6 +166,23 @@ class PhoneCommandParserTest {
     }
 
     @Test
+    fun everydayWordsDoNotTriggerCommands() {
+        // Words like "home", "back", "batter", "April" or "find" inside normal sentences are not commands.
+        assertNull(parse("how do I make homemade pizza"))
+        assertNull(parse("best backup software for photos"))
+        assertNull(parse("how do I make pancake batter"))
+        assertNull(parse("what happened in April 2020"))
+        assertNull(parse("find me a good pizza recipe for tonight with friends"))
+    }
+
+    @Test
+    fun stopOrPauseMusicIsAMediaCommand() {
+        assertEquals(PhoneCommand.Media(MediaAction.PlayPause), parse("stop the music"))
+        assertEquals(PhoneCommand.Media(MediaAction.PlayPause), parse("pause music"))
+        assertEquals(PhoneCommand.Media(MediaAction.PlayPause), parse("pausa musica"))
+    }
+
+    @Test
     fun tokenizeKeepsScriptMarks() {
         assertEquals(listOf("स्क्रीन", "की", "चमक"), PhoneCommandParser.tokenize("स्क्रीन की चमक!"))
         assertEquals(listOf("wi", "fi"), PhoneCommandParser.tokenize("Wi-Fi"))

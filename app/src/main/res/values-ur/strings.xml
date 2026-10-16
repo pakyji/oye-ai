@@ -178,4 +178,10 @@
     <string name="launch_offer">کھولنے کے لیے ٹیپ کریں: %s</string>
     <string name="launch_done">کھول دیا۔</string>
     <string name="action_open">کھولیں</string>
+    <string name="reminder_set">%1$d منٹ بعد، %2$s پر یاد دہانی مقرر ہو گئی۔</string>
+    <string name="reminder_no_notifications">OYE کے لیے نوٹیفیکیشن بند ہیں، اس لیے یاد دہانی نظر نہیں آئے گی۔ ترتیبات میں نوٹیفیکیشن کی اجازت دیں۔</string>
+    <string name="listen_status_ready">سن رہا ہے۔ \"اوئے\" بولیں</string>
+    <string name="listen_status_error">رک گیا: %1$s (کوڈ %2$d)۔ دوبارہ کوشش جاری ہے۔</string>
+    <string name="listen_unavailable">اوئے کی سماعت بند ہو گئی: مائیکروفون کی اجازت یا Google کی آواز کی سروس موجود نہیں۔</string>
+    <string name="listen_resume">\"اوئے\" سننا دوبارہ شروع کرنے کے لیے ٹیپ کریں۔</string>
 </resources>

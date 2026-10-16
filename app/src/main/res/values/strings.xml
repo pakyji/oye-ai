@@ -179,4 +179,9 @@
     <string name="launch_done">Opened.</string>
     <string name="action_open">Open</string>
     <string name="reminder_set">Reminder set for %1$d minutes from now, at %2$s.</string>
+    <string name="reminder_no_notifications">Notifications are off for OYE, so you may not see this reminder. Allow notifications in Settings.</string>
+    <string name="listen_status_ready">Listening. Say \"Oye\"</string>
+    <string name="listen_status_error">Stopped: %1$s (code %2$d). Trying again.</string>
+    <string name="listen_unavailable">Oye listening stopped: the microphone permission or the Google speech service is missing.</string>
+    <string name="listen_resume">Tap to start listening for \"Oye\" again.</string>
 </resources>

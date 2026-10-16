@@ -42,11 +42,13 @@ object OpenAiCompatClient {
             if (code !in 200..299) {
                 throw IOException("HTTP $code: ${text.take(200)}")
             }
-            return JSONObject(text)
+            val message = JSONObject(text)
                 .getJSONArray("choices")
                 .getJSONObject(0)
                 .getJSONObject("message")
-                .getString("content")
+            // A null or missing content would otherwise come back as the text "null".
+            if (message.isNull("content")) throw IOException("The model sent an empty reply")
+            return message.getString("content")
         } finally {
             conn.disconnect()
         }

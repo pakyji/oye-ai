@@ -178,4 +178,10 @@
     <string name="launch_offer">Tocca per aprire: %s</string>
     <string name="launch_done">Aperto.</string>
     <string name="action_open">Apri</string>
+    <string name="reminder_set">Promemoria impostato tra %1$d minuti, alle %2$s.</string>
+    <string name="reminder_no_notifications">Le notifiche sono disattivate per OYE, quindi potresti non vedere il promemoria. Consenti le notifiche nelle impostazioni.</string>
+    <string name="listen_status_ready">In ascolto. Di\' \"Oye\"</string>
+    <string name="listen_status_error">Interrotto: %1$s (codice %2$d). Riprovo.</string>
+    <string name="listen_unavailable">Ascolto di Oye interrotto: manca il permesso del microfono o il servizio vocale di Google.</string>
+    <string name="listen_resume">Tocca per riprendere l\'ascolto di \"Oye\".</string>
 </resources>
