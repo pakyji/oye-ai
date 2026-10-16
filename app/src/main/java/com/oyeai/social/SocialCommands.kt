@@ -33,9 +33,11 @@ object SocialCommands {
         val tokens = tokenize(text)
         if (tokens.isEmpty()) return null
 
+        // Speech recognition often splits or misspells the names: "face book", "insta gram", "fesbuk".
+        val spaced = tokens.joinToString(" ")
         val app = when {
-            tokens.any { it in INSTAGRAM_NAMES } -> SocialApp.INSTAGRAM
-            tokens.any { it in FACEBOOK_NAMES } -> SocialApp.FACEBOOK
+            tokens.any { it in INSTAGRAM_NAMES } || spaced.contains("insta gram") -> SocialApp.INSTAGRAM
+            tokens.any { it in FACEBOOK_NAMES } || spaced.contains("face book") -> SocialApp.FACEBOOK
             else -> null
         }
         val reels = tokens.any { it.startsWith("reel") || it.startsWith("रील") || it.startsWith("रिल") }
@@ -94,8 +96,11 @@ object SocialCommands {
 
     private const val MAX_MINUTES = 180
 
-    private val INSTAGRAM_NAMES = setOf("instagram", "insta", "इंस्टाग्राम", "انسٹاگرام")
-    private val FACEBOOK_NAMES = setOf("facebook", "fb", "फेसबुक", "फ़ेसबुक", "فیس بک", "فیسبک")
+    private val INSTAGRAM_NAMES = setOf("instagram", "instagrm", "instagran", "insta", "इंस्टाग्राम", "انسٹاگرام", "انسٹا")
+    private val FACEBOOK_NAMES = setOf(
+        "facebook", "facebok", "faceboook", "fesbuk", "fesbook", "feisbuk", "fb", "फेसबुक", "फ़ेसबुक",
+        "فیس بک", "فیسبک", "فیس", "فیسبوک"
+    )
 
     private val OPEN_WORDS = listOf("khol", "open", "apri", "aprir", "apro", "launch", "खोल", "کھول")
     private val START_WORDS = listOf("shuru", "start", "chalu", "avvia", "inizia", "riprend", "resume", "continu", "dobara", "phir",

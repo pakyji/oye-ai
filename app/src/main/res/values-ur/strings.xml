@@ -84,6 +84,9 @@
     <string name="social_open_pending">%1$s کھولنے کے لیے OYE کی اطلاع ٹیپ کریں۔ Android پس منظر سے خود ایپس کھولنے کی اجازت نہیں دیتا۔</string>
     <string name="social_not_installed">یہ فون پر انسٹال نہیں ہے: %1$s</string>
     <string name="social_reels_hint">Reels ٹیب خود کھولیں؛ OYE نہیں دیکھ سکتا کہ کون سا ٹیب کھلا ہے۔</string>
+    <string name="social_already_open">%1$s پہلے سے کھلا ہے۔</string>
+    <string name="social_reels_tapped">Reels کھول دیا گیا۔</string>
+    <string name="social_reels_missing">Reels ٹیب نہیں ملا۔ براہ کرم خود ٹیپ کریں۔</string>
     <string name="social_need_accessibility">پہلے Android کی ایکسیسبیلیٹی ترتیبات میں OYE سوشل میڈیا کنٹرول فعال کریں۔</string>
     <string name="social_started">خودکار اسکرولنگ شروع ہو گئی۔ رفتار: %1$s۔ %2$d منٹ بعد رک جائے گی۔</string>
     <string name="social_resumed">خودکار اسکرولنگ دوبارہ شروع ہو گئی۔</string>

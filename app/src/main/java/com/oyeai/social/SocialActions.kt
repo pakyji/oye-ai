@@ -54,25 +54,43 @@ object SocialActions {
         else -> "${intervalMs / 1000} s"
     }
 
-    private fun open(context: Context, command: SocialCommand.Open): String {
+    private suspend fun open(context: Context, command: SocialCommand.Open): String {
         val label = command.app.label
         val launch = context.packageManager.getLaunchIntentForPackage(command.app.packageName)
             ?: return context.getString(R.string.social_not_installed, label)
 
-        val message = if (AppVisibility.resumed) {
-            // OYE is on screen, so Android allows the app to be opened directly.
-            try {
-                context.startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                context.getString(R.string.social_opened, label)
-            } catch (e: ActivityNotFoundException) {
-                return context.getString(R.string.social_not_installed, label)
-            }
-        } else {
+        // The app is already on screen (for example, the user opened it and then spoke): no launch needed.
+        val onScreen = OyeAccessibilityService.activePackage() == command.app.packageName
+        if (onScreen) return if (command.reels) reelsTab(context, label) else context.getString(R.string.social_already_open, label)
+
+        if (!AppVisibility.resumed) {
             // In the background Android blocks this, so the user taps a notification.
             ActionNotifier.offer(context, Action.OpenApp(label))
-            context.getString(R.string.social_open_pending, label)
+            val pending = context.getString(R.string.social_open_pending, label)
+            return if (command.reels) "$pending ${context.getString(R.string.social_reels_hint)}" else pending
         }
-        return if (command.reels) "$message ${context.getString(R.string.social_reels_hint)}" else message
+        // OYE is on screen, so Android allows the app to be opened directly.
+        try {
+            context.startActivity(launch.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (e: ActivityNotFoundException) {
+            return context.getString(R.string.social_not_installed, label)
+        }
+        if (!command.reels) return context.getString(R.string.social_opened, label)
+
+        if (!command.reels) return context.getString(R.string.social_opened, label)
+        // Wait for the app to come forward before looking for its Reels tab.
+        delay(REELS_WAIT_MS)
+        return reelsTab(context, label)
+    }
+
+    /** Taps the Reels tab of the app on screen. The reply says only what was really tapped. */
+    private fun reelsTab(context: Context, label: String): String {
+        val service = OyeAccessibilityService.current()
+            ?: return context.getString(R.string.social_reels_missing)
+        return when (service.clickReelsTab()) {
+            LabelResult.Clicked -> context.getString(R.string.social_reels_tapped)
+            else -> context.getString(R.string.social_reels_missing)
+        }
     }
 
     private suspend fun start(context: Context): String {
@@ -119,6 +137,7 @@ object SocialActions {
         }
 
     private const val OPEN_WAIT_MS = 1_500L
+    private const val REELS_WAIT_MS = 2_500L
 
     private fun changeSpeed(context: Context, delta: Long): String {
         SocialControl.setSpeed(context, SocialControl.intervalMs() + delta)

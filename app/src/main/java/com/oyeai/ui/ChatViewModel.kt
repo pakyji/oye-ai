@@ -63,6 +63,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Hands-free: the mic keeps listening after each answer, so the user never presses it again. */
     private val _handsFree = MutableStateFlow(false)
+    /** Sentences said while the AI was still answering the previous one. */
+    private val queued = ArrayDeque<String>()
+    /** True while OYE is talking. The mic is off then. */
+    private var speaking = false
     val handsFree: StateFlow<Boolean> = _handsFree.asStateFlow()
 
     /** False while the chat screen is in the background. Listening stops then. */
@@ -84,9 +88,16 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             runPhone(clean, command)
             return
         }
-        if (_busy.value) return
+        // Still thinking about the last message: keep this one and send it when the answer is done.
+        if (_busy.value) {
+            queued.addLast(clean)
+            if (_handsFree.value) listenLoop()
+            return
+        }
         append(Role.User, clean)
         _busy.value = true
+        // Hands-free: keep listening while the AI thinks, so a new sentence is not lost.
+        if (_handsFree.value) listenLoop()
 
         viewModelScope.launch {
             val history = _messages.value.takeLast(12).map { m ->
@@ -123,7 +134,14 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
      */
     private suspend fun sayReply(text: String, lang: String) {
         if (_handsFree.value) {
-            speaker.speakAndWait(text, localeFor(lang), SPEAK_TIMEOUT_MS)
+            // Stop the mic first, so OYE does not hear its own voice.
+            speech.stop()
+            speaking = true
+            try {
+                speaker.speakAndWait(text, localeFor(lang), SPEAK_TIMEOUT_MS)
+            } finally {
+                speaking = false
+            }
         } else {
             speaker.speak(text, localeFor(lang))
         }
@@ -131,10 +149,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     /** Hands-free: start listening again once the answer is done and any voice has faded. */
     private fun afterAnswer() {
-        if (!_handsFree.value) return
         viewModelScope.launch {
             delay(ECHO_PAUSE_MS)
-            listenLoop()
+            val next = queued.removeFirstOrNull()
+            if (next != null) send(next) else if (_handsFree.value) listenLoop()
         }
     }
 
@@ -196,7 +214,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun listenLoop() {
-        if (!_handsFree.value || !visible || _busy.value) return
+        if (!_handsFree.value || !visible || speaking) return
         speech.listen(
             languageTag = speechTag(settings.language),
             onText = { text ->

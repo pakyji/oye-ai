@@ -103,4 +103,22 @@ class SocialCommandsTest {
         assertNull(parse("pichla task continue karo"))
         assertNull(parse("musica avanti"))
     }
+
+    @Test
+    fun understandsMisheardFacebookNames() {
+        assertEquals(SocialCommand.Open(SocialApp.FACEBOOK, reels = false), parse("OYE, face book kholo."))
+        assertEquals(SocialCommand.Open(SocialApp.FACEBOOK, reels = false), parse("OYE, fesbuk kholo."))
+        assertEquals(SocialCommand.Open(SocialApp.INSTAGRAM, reels = false), parse("OYE, insta gram kholo."))
+    }
+
+    @Test
+    fun opensFacebookReels() {
+        assertEquals(SocialCommand.Open(SocialApp.FACEBOOK, reels = true), parse("OYE, Facebook reels kholo."))
+    }
+
+    @Test
+    fun normalChatIsNotASocialCommand() {
+        assertNull(parse("OYE, kese ho?"))
+        assertNull(parse("OYE, Facebook ke baare mein batao"))
+    }
 }

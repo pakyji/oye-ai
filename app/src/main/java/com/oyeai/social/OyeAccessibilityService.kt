@@ -113,23 +113,41 @@ class OyeAccessibilityService : AccessibilityService() {
     fun performGlobal(action: Int): Boolean = performGlobalAction(action)
 
     /**
-     * Finds the first node whose text or description contains [label]. When [click] is true, it taps
-     * that node or its nearest clickable parent. Only [label] is matched; the screen text is not returned.
+     * Finds a node whose text or description matches [label], and taps it when [click] is true.
+     * Exact matches are tried first, so "friends" never selects "Friend requests" when "Friends" exists.
+     * Only [label] is matched; the screen text is never returned.
      */
     fun findLabel(label: String, click: Boolean): LabelResult {
+        val wanted = label.trim().lowercase(Locale.ROOT)
+        if (wanted.isEmpty()) return LabelResult.NotFound
+        return locateAndAct(click) { s -> s == wanted } ?: locateAndAct(click) { s -> s.contains(wanted) }
+            ?: LabelResult.NotFound
+    }
+
+    /**
+     * Taps the Reels tab of the app on screen. Only a short element named "Reels" (or "Reel") is
+     * accepted, so posts that merely mention reels are not tapped.
+     */
+    fun clickReelsTab(): LabelResult {
+        val names = listOf("reels", "reel")
+        return locateAndAct(click = true) { s ->
+            s.length <= 40 && names.any { n -> s == n || s.startsWith("$n,") || s.startsWith("$n ") && s.length <= 20 }
+        } ?: LabelResult.NotFound
+    }
+
+    /** Returns null when no node matches, so the caller can try a looser rule. */
+    private fun locateAndAct(click: Boolean, matches: (String) -> Boolean): LabelResult? {
         val root = rootInActiveWindow ?: return LabelResult.NoWindow
         val pkg = root.packageName?.toString()
-        val supported = isSupportedPackage(pkg)
-        if (!supported) {
+        if (!isSupportedPackage(pkg)) {
             root.recycleCompat()
             return LabelResult.Unsupported
         }
         if (pkg != null && pkg in SUPPORTED_PACKAGES) lastSupported = pkg
-        val wanted = label.lowercase(Locale.ROOT)
-        val match = findNode(root, wanted, 0)
+        val match = findNode(root, 0, matches)
         // When the root itself matched, it is recycled once below, as [match].
         if (match !== root) root.recycleCompat()
-        if (match == null) return LabelResult.NotFound
+        if (match == null) return null
         if (!click) {
             match.recycleCompat()
             return LabelResult.Found
@@ -141,15 +159,15 @@ class OyeAccessibilityService : AccessibilityService() {
         return if (performed) LabelResult.Clicked else LabelResult.NotClickable
     }
 
-    /** Depth-first search for a node whose text or description contains [wanted]. The caller recycles the result. */
-    private fun findNode(node: AccessibilityNodeInfo, wanted: String, depth: Int): AccessibilityNodeInfo? {
+    /** Depth-first search for a node whose text or description satisfies [matches]. The caller recycles the result. */
+    private fun findNode(node: AccessibilityNodeInfo, depth: Int, matches: (String) -> Boolean): AccessibilityNodeInfo? {
         if (depth > MAX_DEPTH) return null
-        val text = node.text?.toString()?.lowercase(Locale.ROOT).orEmpty()
-        val desc = node.contentDescription?.toString()?.lowercase(Locale.ROOT).orEmpty()
-        if (wanted.isNotEmpty() && (text.contains(wanted) || desc.contains(wanted))) return node
+        val text = node.text?.toString()?.trim()?.lowercase(Locale.ROOT).orEmpty()
+        val desc = node.contentDescription?.toString()?.trim()?.lowercase(Locale.ROOT).orEmpty()
+        if ((text.isNotEmpty() && matches(text)) || (desc.isNotEmpty() && matches(desc))) return node
         for (i in 0 until node.childCount) {
             val child = node.getChild(i) ?: continue
-            val found = findNode(child, wanted, depth + 1)
+            val found = findNode(child, depth + 1, matches)
             if (found != null) {
                 if (found !== child) child.recycleCompat()
                 return found

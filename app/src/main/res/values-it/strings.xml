@@ -84,6 +84,9 @@
     <string name="social_open_pending">Tocca la notifica di OYE per aprire %1$s. Android non permette a OYE di aprire app da solo in background.</string>
     <string name="social_not_installed">%1$s non è installato su questo telefono.</string>
     <string name="social_reels_hint">Vai tu alla scheda Reels: OYE non può vedere quale scheda è aperta.</string>
+    <string name="social_already_open">%1$s è già aperto.</string>
+    <string name="social_reels_tapped">Ho aperto Reels.</string>
+    <string name="social_reels_missing">Non trovo la scheda Reels. Toccala tu.</string>
     <string name="social_need_accessibility">Prima attiva il controllo social di OYE nelle impostazioni di accessibilità di Android.</string>
     <string name="social_started">Scorrimento avviato. Velocità: %1$s. Si ferma tra %2$d minuti.</string>
     <string name="social_resumed">Scorrimento ripreso.</string>
