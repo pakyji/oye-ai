@@ -28,7 +28,7 @@ one already installed.
 
 Add keys for as many providers as you like. OYE uses the selected provider first and
 falls back to the others if one fails. Built in: Pollinations, OpenAI, Groq, Google Gemini,
-OpenRouter, Mistral, DeepSeek and xAI. Models can be changed per provider in Settings.
+OpenRouter, Mistral, DeepSeek, xAI, Meta and Llama. Models can be changed per provider in Settings.
 
 **Add your own provider:** in Settings, use "Add your own AI provider". Enter a name, a base URL
 that starts with `https://` (for example `https://api.example.com/v1`), a model and your API key.
