@@ -6,7 +6,7 @@ A personal AI assistant for Android. It listens for "Oye" or reads what you type
 **Italian, English and Urdu**, and can act on your phone: open apps, set reminders and timers,
 scroll apps on request, prepare WhatsApp messages, and open links. It can keep listening in the background.
 
-**Current version: 0.2.0 (test build).** Not yet tested on every phone. See the Limits section.
+**Current version: 0.2.1 (test build).** Not yet tested on every phone. See the Limits section.
 
 Phone commands are also understood in Hindi and Roman Urdu (Hinglish).
 

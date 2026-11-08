@@ -26,7 +26,7 @@ android {
         // and Android installs it as an update. Local builds keep versionCode 2.
         def ciRun = System.getenv('GITHUB_RUN_NUMBER')
         versionCode ciRun ? 1000 + ciRun.toInteger() : 2
-        versionName '0.2.0'
+        versionName '0.2.1'
     }
 
     signingConfigs {
